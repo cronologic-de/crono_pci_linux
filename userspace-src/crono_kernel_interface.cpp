@@ -223,9 +223,29 @@ Set card cleanup commands
 uint32_t CRONO_KERNEL_CardCleanupSetup(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                        CRONO_KERNEL_TRANSFER *Cmd,
                                        uint32_t dwCmds, int bForceCleanup) {
+        int ret = CRONO_SUCCESS;
+        char miscdev_path[PATH_MAX];
+        int miscdev_fd;
+
         // Init variables and validate parameters
         CRONO_INIT_HDEV_FUNC(hDev);
-        //$$
+        miscdev_fd = 0;
+
+        // Open device file
+        // Get device file name & open it
+        sprintf(miscdev_path, "/dev/%s", pDevice->miscdev_name);
+        miscdev_fd = open(miscdev_path, O_RDWR);
+        if (miscdev_fd < 0) {
+                printf("Error %d: cannot open device file <%s>...\n", errno,
+                       miscdev_path);
+                return errno;
+        }
+
+        if (CRONO_SUCCESS !=
+            ioctl(miscdev_fd, IOCTL_CRONO_UNLOCK_BUFFER, NULL)) {
+                return -EPERM;
+        }
+
         return CRONO_SUCCESS;
 }
 
@@ -462,8 +482,8 @@ void *CRONO_KERNEL_GetDevContext(CRONO_KERNEL_DEVICE_HANDLE hDev) {
 
 int CRONO_KERNEL_AddrSpaceIsActive(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                    uint32_t dwAddrSpace) {
-        // $$ not implemented
-        printf("CRONO_KERNEL_AddrSpaceIsActive is not implemented yet.\n");
+
+        CRONO_INIT_HDEV_FUNC(hDev);
         return CRONO_SUCCESS;
 }
 
