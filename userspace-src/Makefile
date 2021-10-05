@@ -9,8 +9,7 @@ include ${shell pwd}/../MakefileCommon.mk
 #
 LIBINCPATH  := ../include
 CRONODRVPATH:= ../driver 
-INC         := -I${shell pwd}/$(LIBINCPATH) -I/usr/include -I${shell pwd}/crono_dma \
-               -I${shell pwd}/$(CRONODRVPATH) -I${shell pwd}/components -I${shell pwd}/
+INC         := -I${shell pwd}/$(LIBINCPATH) 
 
 # Module Full Version: <Version number>.<minor number>.<release number>
 LIBVER		:= .1
