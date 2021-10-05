@@ -7,9 +7,9 @@ include ${shell pwd}/../MakefileCommon.mk
 #_____________________
 # Set global variables
 #
-LIBINCPATH	:= ../include
+LIBINCPATH  := ../include
 CRONODRVPATH:= ../driver 
-INC 		:= -I${shell pwd}/$(LIBINCPATH) -I/usr/include -I${shell pwd}/crono_dma \
+INC         := -I${shell pwd}/$(LIBINCPATH) -I/usr/include -I${shell pwd}/crono_dma \
                -I${shell pwd}/$(CRONODRVPATH) -I${shell pwd}/components -I${shell pwd}/
 
 # Module Full Version: <Version number>.<minor number>.<release number>
