@@ -62,8 +62,10 @@ $ make
 The build target output is:
 | Output | Builds | Description | 
 | -------- | ------ | ----------- |
-| `crono_userspace.a` | ``./build/bin/release_64/`` | The release version of the driver |
-| `crono_userspace.a` | ``./build/bin/debug_64/`` | The debug version of the driver |
+| `crono_userspace.a` | ``./build/bin/release_64/`` | The release version of the userspace static library |
+| `crono_userspace.a` | ``./build/bin/debug_64/`` | The debug version of the userspace static library |
+| `crono_userspace.so._version_` </br> and </br>`crono_userspace.so` symbolic link | ``./build/crono_userspace/release_64``| The release version of the userspace shared library |
+| `crono_userspace.so._version_` </br> and </br>`crono_userspace.so` symbolic link | ``./build/crono_userspace/debug_64``| The debug version of the userspace shared library |
 
 Temporary build files (e.g. `.o` files) are found under the directory ``./build/crono_userspace``.
 
@@ -147,3 +149,12 @@ Or, you can clean a specific build as following:
 
 ---
 
+# Usage 
+The library is provided mainly as a static library `crono_userspace.a` to be used by other applications to handle the devices.
+
+## Header Files
+All the provided APIs and macros are found in the header file [``crono_kernel_interface.h``](./include/crono_kernel_interface.h). 
+
+Additionally, `BAR` and `Configuraion Space` utility functions prototypes are found in [``crono_userspace.h``](./include/crono_userspace.h). 
+
+While, cronologic PCI driver module strucutres and definitions are found in the header file [``crono_driver.h``](./include/crono_driver.h). 
