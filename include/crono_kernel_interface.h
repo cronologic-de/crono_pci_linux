@@ -42,6 +42,11 @@ typedef struct {
                 uint64_t Qword;      // Use for 64 bit transfer.
                 void *pBuffer;       // Use for string transfer.
         } Data;
+
+        // Needed for internal projects usage
+        KPTR pPort;        // I/O port for transfer or kernel memory address.
+        uint32_t cmdTrans; // Transfer command WD_TRANSFER_CMD.
+
 } CRONO_KERNEL_TRANSFER;
 
 typedef struct {
@@ -215,6 +220,10 @@ typedef struct CRONO_KERNEL_DEVICE {
          * The name of the corresponding `miscdev` file, found under /dev
          */
         char miscdev_name[CRONO_MAX_DEV_NAME_SIZE];
+
+        // Needed for internal projects usage
+        uint32_t dwNumAddrSpaces;          /* Total number of device's address
+                                            * spaces */
 
 } CRONO_KERNEL_DEVICE, *PCRONO_KERNEL_DEVICE;
 
