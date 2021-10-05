@@ -136,8 +136,8 @@ make clean
 ```
 Or, you can clean a specific build as following:
 ```CMD
-.../userspace-src$ suod make cleandebug_64
-.../userspace-src$ suod make cleanrelease_64
+.../userspace-src$ sudo make cleandebug_64
+.../userspace-src$ sudo make cleanrelease_64
 ```
 
 ## More Details
