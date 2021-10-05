@@ -49,6 +49,8 @@ The project is tested on the following **64-bit** distributions:
   - 5.14.9-1.el8.elrepo.x86_64
 - **Fedora** (Fedora-Workstation-Live-x86_64-34-1.2):
   - 5.14.9-200.fc34.x86_64
+- **Debian** (Debian GNU/Linux 11 (bullseye))
+  - 5.10.0-8-amd64
 
 ---
 
@@ -136,8 +138,8 @@ make clean
 ```
 Or, you can clean a specific build as following:
 ```CMD
-.../userspace-src$ suod make cleandebug_64
-.../userspace-src$ suod make cleanrelease_64
+.../userspace-src$ sudo make cleandebug_64
+.../userspace-src$ sudo make cleanrelease_64
 ```
 
 ## More Details
