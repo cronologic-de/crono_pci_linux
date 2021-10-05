@@ -10,7 +10,7 @@ include ${shell pwd}/../MakefileCommon.mk
 LIBINCPATH	:= ../include
 CRONODRVPATH:= ../driver 
 INC 		:= -I${shell pwd}/$(LIBINCPATH) -I/usr/include -I${shell pwd}/crono_dma \
-			   -I${shell pwd}/$(CRONODRVPATH) -I${shell pwd}/components -I${shell pwd}/
+               -I${shell pwd}/$(CRONODRVPATH) -I${shell pwd}/components -I${shell pwd}/
 
 # Module Full Version: <Version number>.<minor number>.<release number>
 LIBVER		:= .1
@@ -30,16 +30,16 @@ clean: cleanrelease_64 cleandebug_64
 # _____________________________________________________________________________
 # 64 Bit Release build settings
 #
-REL64DIR 		:= ../build/crono_userspace/release_64
-REL64CFLAGS 	:= -g -Wall -m64 -DUSE_CRONO_KERNEL_DRIVER
-REL64TARGET		:= crono_userspace
-REL64SLNKNAME	:= $(REL64TARGET).so
-REL64SONAME		:= $(REL64SLNKNAME)$(LIBVER)
-REL64LIBNAME	:= $(REL64SLNKNAME)$(LIBFULLVER)
-REL64STNAME		:= $(REL64TARGET).a
-REL64LDFLAGS	:= -m64
-REL64OBJFILES 	:= $(REL64DIR)/crono_kernel_interface.o $(REL64DIR)/sysfs.o 	
-REL64BINPATH	:= ../build/bin/release_64
+REL64DIR        := ../build/crono_userspace/release_64
+REL64CFLAGS     := -g -Wall -m64 -DUSE_CRONO_KERNEL_DRIVER
+REL64TARGET     := crono_userspace
+REL64SLNKNAME   := $(REL64TARGET).so
+REL64SONAME     := $(REL64SLNKNAME)$(LIBVER)
+REL64LIBNAME    := $(REL64SLNKNAME)$(LIBFULLVER)
+REL64STNAME     := $(REL64TARGET).a
+REL64LDFLAGS    := -m64
+REL64OBJFILES   := $(REL64DIR)/crono_kernel_interface.o $(REL64DIR)/sysfs.o 	
+REL64BINPATH    := ../build/bin/release_64
 #
 # 64 Bit Release rules
 #
@@ -75,16 +75,16 @@ cleanrelease_64:
 # _____________________________________________________________________________
 # 64 Bit Debug build settings
 #
-DBG64DIR 		:= ../build/crono_userspace/debug_64
-DBG64CFLAGS 	:= -g -Wall -m64 -DUSE_CRONO_KERNEL_DRIVER -DCRONO_DEBUG_ENABLED -DDEBUG
-DBG64TARGET		:= crono_userspace
-DBG64SLNKNAME	:= $(DBG64TARGET).so
-DBG64SONAME		:= $(DBG64SLNKNAME)$(LIBVER)
-DBG64LIBNAME	:= $(DBG64SLNKNAME)$(LIBFULLVER)
-DBG64STNAME		:= $(DBG64TARGET).a
-DBG64LDFLAGS	:= -m64
-DBG64OBJFILES	:= $(DBG64DIR)/crono_kernel_interface.o $(DBG64DIR)/sysfs.o 
-DBG64BINPATH	:= ../build/bin/debug_64
+DBG64DIR        := ../build/crono_userspace/debug_64
+DBG64CFLAGS     := -g -Wall -m64 -DUSE_CRONO_KERNEL_DRIVER -DCRONO_DEBUG_ENABLED -DDEBUG
+DBG64TARGET     := crono_userspace
+DBG64SLNKNAME   := $(DBG64TARGET).so
+DBG64SONAME     := $(DBG64SLNKNAME)$(LIBVER)
+DBG64LIBNAME    := $(DBG64SLNKNAME)$(LIBFULLVER)
+DBG64STNAME     := $(DBG64TARGET).a
+DBG64LDFLAGS    := -m64
+DBG64OBJFILES   := $(DBG64DIR)/crono_kernel_interface.o $(DBG64DIR)/sysfs.o 
+DBG64BINPATH    := ../build/bin/debug_64
 #
 # 64 Bit Debug rules
 #
