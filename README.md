@@ -152,4 +152,9 @@ Or, you can clean a specific build as following:
 # Usage 
 The library is provided mainly as a static library `crono_userspace.a` to be used by other applications to handle the devices.
 
-All the provided APIs and macros are found in the header file [``crono_kernel_interface.h``](./include/crono_kernel_interface.h). In addition to 
+## Header Files
+All the provided APIs and macros are found in the header file [``crono_kernel_interface.h``](./include/crono_kernel_interface.h). 
+
+Additionally, `BAR` and `Configuraion Space` utility functions prototypes are found in [``crono_userspace.h``](./include/crono_userspace.h). 
+
+While, cronologic PCI driver module strucutres and definitions are found in the header file [``crono_driver.h``](./include/crono_driver.h). 
