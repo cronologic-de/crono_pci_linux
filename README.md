@@ -51,3 +51,99 @@ The project is tested on the following **64-bit** distributions:
   - 5.14.9-200.fc34.x86_64
 
 ---
+
+# Build the Project
+To build the project, run `make` command:
+```CMD
+$ make
+```
+
+## Target Output
+The build target output is:
+| Output | Builds | Description | 
+| -------- | ------ | ----------- |
+| `crono_userspace.a` | ``./build/bin/release_64/`` | The release version of the driver |
+| `crono_userspace.a` | ``./build/bin/debug_64/`` | The debug version of the driver |
+
+Temporary build files (e.g. `.o` files) are found under the directory ``./build/crono_userspace``.
+
+## Makefiles and Build Versions
+The following makefiles are used to build the project versions:
+| Makefile | Builds | Description | 
+| -------- | ------ | ----------- |
+| ./Makefile | Debug </br> Release | Calls ALL makefiles in sub-directories. </br>This will build both the `debug` and `release` versions of the project.|
+| ./userspace-src/Makefile | Debug </br> Release | This will build both the `debug` and `release` versions of the project.</br>Make options:</br>- **release_64**: Builds the release version.</br>- **debug_64**: Builds the debug version.</br>- **cleanrelease_64**: Cleans the release version.</br>- **cleandebug_64**: Cleans the debug version.</br>- all: release_64 debug_64.</br>- clean: cleanrelease_64 cleandebug_64.|
+| ./MakefileCommon.mk | None | Contains the common functions used by makefile(s) |
+
+## Build Prerequisites
+### Ubuntu 
+- Make sure that both `make` and `g++` packages are installed, or install them using: 
+```CMD
+sudo apt-get install make g++
+```
+
+### CentOS 
+- Make sure that both `make` and `g++` packages are installed, or install them using: 
+```CMD
+sudo yum install g++ make
+```
+
+### Fedora
+- Make sure that both `make` and `g++` packages are installed, or install them using: 
+```CMD
+sudo yum install gcc make
+```
+- If the kernel development is not installed on your system for the current kernel verision, you can install it as following
+```CMD
+sudo yum install kernel-devel-$(uname -r)
+```
+
+### Debian 
+- Make sure that both `make` and `gcc` packages are installed, or install them using: 
+```CMD
+sudo apt-get install make gcc
+```
+- Make sure `modules` and `headers` of your current kernel version are installed, or install them using:
+```CMD
+sudo apt-get install linux-headers-$(uname -r) 
+```
+
+### General Notes
+* You can check if `make` and `g++` are installed by running the following commands:
+```CMD
+make -v
+```
+and
+```CMD
+g++ -v
+```
+
+In Fedora, the following will be dipslayed in case `g++` is not installed,
+```CMD
+$ g++ -v
+bash: g++: command not found...
+Install package 'gcc-c++' to provide command 'g++'? [N/y]  
+```
+You just enter `y` and accept installing dependencies, if inquired.
+
+
+## Clean the Output Files 
+To clean the project all builds output:
+```CMD
+make clean
+```
+Or, you can clean a specific build as following:
+```CMD
+.../userspace-src$ suod make cleandebug_64
+.../userspace-src$ suod make cleanrelease_64
+```
+
+## More Details
+
+### Preprocessor Directives
+| Identifier | Description | 
+| ---------- | ----------- |
+|`CRONO_DEBUG_ENABLED` and `DEBUG`| Debug mode.|
+
+---
+
