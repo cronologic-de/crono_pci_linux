@@ -142,6 +142,13 @@ Or, you can clean a specific build as following:
 .../userspace-src$ sudo make cleanrelease_64
 ```
 
+## Set the Library Version
+Set the library version in the [Makefile](./userspace-src/Makefile):
+```MAKE
+LIBVER		:= .1
+LIBFULLVER	:= $(LIBVER).0.1
+```
+
 ## More Details
 
 ### Preprocessor Directives
