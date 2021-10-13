@@ -54,7 +54,7 @@ The project is tested on the following **64-bit** distributions:
 - **openSUSE** Leap 15.3(**)
   - 5.3.15-59.27-default
 
-(**) Driver code is built successfully, however, the driver was not tested on the devices.
+(**) Project code is built successfully, however, the driver was not tested on the devices.
 
 ---
 
