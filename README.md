@@ -17,7 +17,7 @@ The initial code has been written by [Bassem Ramzy](https://github.com/Bassem-Ra
 ---
 
 # The Project
-The project generates `crono_userspace.a` static lbrary that is used by applications that need to access the kernel driver.
+The project generates `crono_pci_linux.a` static lbrary that is used by applications that need to access the kernel driver.
 
 ## Architecture
 <p align="center">
@@ -68,12 +68,10 @@ $ make
 The build target output is:
 | Output | Builds | Description | 
 | -------- | ------ | ----------- |
-| `crono_userspace.a` | ``./build/bin/release_64/`` | The release version of the userspace static library |
-| `crono_userspace.a` | ``./build/bin/debug_64/`` | The debug version of the userspace static library |
-| `crono_userspace.so._version_` </br> and </br>`crono_userspace.so` symbolic link | ``./build/crono_userspace/release_64``| The release version of the userspace shared library |
-| `crono_userspace.so._version_` </br> and </br>`crono_userspace.so` symbolic link | ``./build/crono_userspace/debug_64``| The debug version of the userspace shared library |
+| `crono_pci_linux.a` | ``./build/bin/release_64/`` | The release version of the userspace static library |
+| `crono_pci_linux.a` | ``./build/bin/debug_64/`` | The debug version of the userspace static library |
 
-Temporary build files (e.g. `.o` files) are found under the directory ``./build/crono_userspace``.
+Temporary build files (e.g. `.o` files) are found under the directory ``./build/crono_pci_linux``.
 
 ## Makefiles and Build Versions
 The following makefiles are used to build the project versions:
@@ -175,7 +173,7 @@ LIBFULLVER	:= $(LIBVER).0.1
 ---
 
 # Usage 
-The library is provided mainly as a static library `crono_userspace.a` to be used by other applications to handle the devices.
+The library is provided mainly as a static library `crono_pci_linux.a` to be used by other applications to handle the devices.
 
 ## Header Files
 All the provided APIs and macros are found in the header file [``crono_kernel_interface.h``](./include/crono_kernel_interface.h). 
