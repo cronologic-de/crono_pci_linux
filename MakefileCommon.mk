@@ -84,19 +84,31 @@ define CRONO_MAKE_CLEAN_LIB_OUTPUT_FILES_RULE
 endef
 
 # $1: DIR
+# $2: STNAME
+# $3: Build BIN path (e.g. `../../../build/bin/release_64`)
+define CRONO_MAKE_STATIC_LIB_RULE
+	# Build the static library 
+	ar rcs $(1)/$(2) $(1)/*.o
+
+	# Copy the library to /build/bin corresponding directory
+	mkdir -p $(3)
+	cp -t $(3) $(1)/$(2)
+endef
+
+# $1: DIR
 # $2: SLNKNAME
 # $3: SONAME
 # $4: LIBNAME
 # $5: STNAME
 # $6: OBJFILES
 # $7: LDFLAGS
-# $8: `crono_userspace(_64).a` Name
+# $8: `crono_pci_linux(_64).a` Name
 # $9: Build BIN path (e.g. `../../../build/bin/release_64`)
 # Deacription: Create output directory, `SO`, `ST`, and `SLNK`
 define CRONO_MAKE_US_LIBS_RULE
 	@echo Using userspace library: $(1)/$(8)
 	# Build userspace needed library if not found
-	[ -f $(1)/$(8) ] || $(MAKE) -C ../userspace
+	[ -f $(1)/$(8) ] || $(MAKE) -C ../userspace-src
 
 	# Create the `/build/xyz_userspace` corresponding directory
 	mkdir -p $(1)
@@ -116,7 +128,7 @@ define CRONO_MAKE_US_LIBS_RULE
 	# Make sure `lib` /has no files from a previous build
 	$(call CRONO_MAKE_CLEAN_FILE,$(1)/lib/*.o)
 
-	# Extract corresponding `crono_userspace(_64).a` to `/lib` 
+	# Extract corresponding `crono_pci_linux(_64).a` to `/lib` 
 	# `ar --output` is not compatibile with older linux versions 
 	ar x $(9)/$(8)
 	mv *.o $(1)/lib 
@@ -135,11 +147,42 @@ define CRONO_MAKE_US_LIBS_RULE
 	cp -t $(9) $(1)/$(5)
 endef
 
-# $1 Userspace Library Path
-# $2 Userspace Library Source Directory Path
-# $3 Build type (e.g. release_64)
-define CRONO_MAKE_USRSPC_LIB
-	@echo Using userspace library: $(1)
+# $1: DIR
+# $2: STNAME
+# $3: OBJFILES
+# $4: LDFLAGS
+# $5: `crono_pci_linux(_64).a` Name
+# $6: Build BIN path (e.g. `../../../build/bin/release_64`)
+# Deacription: Create output directory and `ST`
+define CRONO_MAKE_STATIC_LIBS_RULE
+	@echo Using userspace library: $(1)/$(5)
 	# Build userspace needed library if not found
-	[ -f $(1) ] || $(MAKE) -C $(2) $(3)
+	[ -f $(1)/$(5) ] || $(MAKE) -C ../userspace-src
+
+	# Create the `/build/xyz_userspace` corresponding directory
+	mkdir -p $(1)
+
+	# Create a temporary folder to have all object files of both the `userspace` project, and this project
+	mkdir -p $(1)/lib
+
+	# Make sure `lib` /has no files from a previous build
+	$(call CRONO_MAKE_CLEAN_FILE,$(1)/lib/*.o)
+
+	# Extract corresponding `crono_pci_linux(_64).a` to `/lib` 
+	# `ar --output` is not compatibile with older linux versions 
+	ar x $(6)/$(5)
+	mv *.o $(1)/lib 
+
+	# Copy all project `.o` files from corresponding build folder to `/lib`
+	cp -t $(1)/lib $(3) 
+
+	# Build the `xyz-sepcific` static library from both files
+	ar rcs $(1)/$(2) $(1)/lib/*.o
+
+	# Display static library files for double checking
+	# ar t $(1)/$(2)
+
+	# Copy the library to /build/bin corresponding directory
+	mkdir -p $(6)
+	cp -t $(6) $(1)/$(2)
 endef
