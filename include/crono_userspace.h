@@ -1,3 +1,14 @@
+/**
+ * @file crono_userspace.h
+ * @author Bassem Ramzy
+ * @brief File has public macros and function prototypes needed by userspace
+ * applications that communicate with cronologic PCI driver.
+ * @version 0.1
+ * @date 2021-11-09
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
 #ifndef _CRONO_USERSPACE_H_
 #define _CRONO_USERSPACE_H_
 
@@ -25,8 +36,8 @@
  */
 #define CRONO_CONSTRUCT_CONFIG_FILE_PATH(config_file_path, domain, bus, dev,   \
                                          func)                                 \
-        snprintf(config_file_path, PATH_MAX, "%s/%04x:%02x:%02x.%1u/config",   \
-                 SYS_BUS_PCIDEVS_PATH, domain, bus, dev, func);
+  snprintf(config_file_path, PATH_MAX, "%s/%04x:%02x:%02x.%1u/config",         \
+           SYS_BUS_PCIDEVS_PATH, domain, bus, dev, func);
 
 /**
  * Constructs the /sys/bus/pci/devices/DBDF symbolic link path into
@@ -34,8 +45,8 @@
  * attributes are unsigned.
  */
 #define CRONO_CONSTRUCT_DEV_SLINK_PATH(dev_slink_path, domain, bus, dev, func) \
-        snprintf(dev_slink_path, PATH_MAX, "%s/%04x:%02x:%02x.%1u",            \
-                 SYS_BUS_PCIDEVS_PATH, domain, bus, dev, func);
+  snprintf(dev_slink_path, PATH_MAX, "%s/%04x:%02x:%02x.%1u",                  \
+           SYS_BUS_PCIDEVS_PATH, domain, bus, dev, func);
 
 /**
  * Reads data from devices configuration space using sysfs.

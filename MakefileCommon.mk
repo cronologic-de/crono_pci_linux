@@ -108,7 +108,7 @@ endef
 define CRONO_MAKE_US_LIBS_RULE
 	@echo Using userspace library: $(1)/$(8)
 	# Build userspace needed library if not found
-	[ -f $(1)/$(8) ] || $(MAKE) -C ../userspace-src
+	[ -f $(1)/$(8) ] || $(MAKE) -C ../src
 
 	# Create the `/build/xyz_userspace` corresponding directory
 	mkdir -p $(1)
@@ -157,7 +157,7 @@ endef
 define CRONO_MAKE_STATIC_LIBS_RULE
 	@echo Using userspace library: $(1)/$(5)
 	# Build userspace needed library if not found
-	[ -f $(1)/$(5) ] || $(MAKE) -C ../userspace-src
+	[ -f $(1)/$(5) ] || $(MAKE) -C ../src
 
 	# Create the `/build/xyz_userspace` corresponding directory
 	mkdir -p $(1)

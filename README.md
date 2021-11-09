@@ -31,7 +31,7 @@ The userspace in this project represents the `OS Abstraction Layer` in the archi
 ##  Directory Structure
     .
     ├── include        # Header files to be included by application as well
-    ├── userspace-src  # Userspace source files
+    ├── src            # Userspace source files
     ├── Makefile
     └── MakefileCommon.mk
 
@@ -78,7 +78,7 @@ The following makefiles are used to build the project versions:
 | Makefile | Builds | Description | 
 | -------- | ------ | ----------- |
 | ./Makefile | Debug </br> Release | Calls ALL makefiles in sub-directories. </br>This will build both the `debug` and `release` versions of the project.|
-| ./userspace-src/Makefile | Debug </br> Release | This will build both the `debug` and `release` versions of the project.</br>Make options:</br>- **release_64**: Builds the release version.</br>- **debug_64**: Builds the debug version.</br>- **cleanrelease_64**: Cleans the release version.</br>- **cleandebug_64**: Cleans the debug version.</br>- all: release_64 debug_64.</br>- clean: cleanrelease_64 cleandebug_64.|
+| ./src/Makefile | Debug </br> Release | This will build both the `debug` and `release` versions of the project.</br>Make options:</br>- **release_64**: Builds the release version.</br>- **debug_64**: Builds the debug version.</br>- **cleanrelease_64**: Cleans the release version.</br>- **cleandebug_64**: Cleans the debug version.</br>- all: release_64 debug_64.</br>- clean: cleanrelease_64 cleandebug_64.|
 | ./MakefileCommon.mk | None | Contains the common functions used by makefile(s) |
 
 ## Build Prerequisites
@@ -152,12 +152,12 @@ make clean
 ```
 Or, you can clean a specific build as following:
 ```CMD
-.../userspace-src$ sudo make cleandebug_64
-.../userspace-src$ sudo make cleanrelease_64
+.../src$ sudo make cleandebug_64
+.../src$ sudo make cleanrelease_64
 ```
 
 ## Set the Library Version
-Set the library version `LIBVER` and `LIBFULLVER` in the [Makefile](./userspace-src/Makefile) as following:
+Set the library version `LIBVER` and `LIBFULLVER` in the [Makefile](./src/Makefile) as following:
 ```MAKE
 LIBVER		:= .1
 LIBFULLVER	:= $(LIBVER).0.1
@@ -180,4 +180,4 @@ All the provided APIs and macros are found in the header file [``crono_kernel_in
 
 Additionally, `BAR` and `Configuraion Space` utility functions prototypes are found in [``crono_userspace.h``](./include/crono_userspace.h). 
 
-While, cronologic PCI driver module strucutres and definitions are found in the header file [``crono_driver.h``](./include/crono_driver.h). 
+While, cronologic PCI driver module strucutres and definitions are found in the header file [``crono_linux_kernel.h``](./include/crono_linux_kernel.h). 
