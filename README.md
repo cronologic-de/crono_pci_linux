@@ -1,5 +1,5 @@
-# cronologic_linux_usermode
-Linux user mode driver to support large DMA ring buffers.
+# crono_pci_linux
+Linux user mode driver to support large DMA ring buffers on a PCI bus.
 
 It has been developed by cronologic GmbH & Co. KG to support the drivers for its time measurement devices such as.
 * [xHPTDC8](https://www.cronologic.de/products/tdcs/xhptdc8-pcie) 8 channel 13ps streaming time-to-digital converter
