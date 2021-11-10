@@ -31,12 +31,7 @@ typedef struct {
 } CRONO_KERNEL_DMA_PAGE;
 
 typedef struct {
-//$$ still needed?
-#if !defined(CRONO_KERNEL_MODE) && defined(KERNEL_64BIT)
-  PVOID64 pUserAddr;
-#else
-  void *pUserAddr; // Beginning of buffer.
-#endif
+  void *pUserAddr;  // Beginning of buffer.
   uint32_t dwBytes; // Size of buffer.
   uint32_t dwPages; // Number of pages in buffer.
   CRONO_KERNEL_DMA_PAGE *Page;
