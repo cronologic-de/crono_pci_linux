@@ -27,6 +27,18 @@ endef
 # $2: DIR
 # $3: CFLAGS
 # $4: LDFLAGS
+# $5: Source Directory
+# Compiles the cpp file, and move .o to DIR
+define CRONO_MAKE_CPP_SRC_FILE_RULE 
+	mkdir -p $(2)
+	$(GCC) $(INC) $(3) -c $(5)/$(1).cpp $(4)
+	mv $(1).o $(2)/$(1).o 
+endef
+
+# $1: File Name
+# $2: DIR
+# $3: CFLAGS
+# $4: LDFLAGS
 # Compiles the c file, and move .o to DIR
 define CRONO_MAKE_C_FILE_RULE 
 	mkdir -p $(2)
@@ -34,9 +46,21 @@ define CRONO_MAKE_C_FILE_RULE
 	mv $(1).o $(2)/$(1).o 
 endef
 
+# $1: File Name
+# $2: DIR
+# $3: CFLAGS
+# $4: LDFLAGS
+# $5: Source Directory
+# Compiles the c file, and move .o to DIR
+define CRONO_MAKE_C_SRC_FILE_RULE 
+	mkdir -p $(2)
+	$(GCC) $(INC) $(3) -c $(5)/$(1).c $(4)
+	mv $(1).o $(2)/$(1).o 
+endef
+
 # $1: Target 
-# $2: Output Directory (e.g. `../../../build/xtdc4_ug_example/release_64`)
-# $3: Build BIN path (e.g. `../../../build/bin/release_64`)
+# $2: Output Directory (e.g. `../../build/linux/crono_pci_linux/release_64`)
+# $3: Build BIN path (e.g. `../../build/linux/bin/release_64`)
 # Copy the target file to BIN directory, and move it to the output directory
 define CRONO_COPY_TARGET
 	mkdir -p $(3)
@@ -55,9 +79,21 @@ define CRONO_MAKE_LIB_CPP_FILE_RULE
 	mv $(1).o $(2)/$(1).o 
 endef
 
+# $1: File Name
+# $2: DIR
+# $3: CFLAGS
+# $4: LDFLAGS
+# $5: Source Directory
+# Compiles the cpp file, and move .o to DIR
+define CRONO_MAKE_LIB_CPP_SRC_FILE_RULE 
+	mkdir -p $(2)
+	$(GCC) $(INC) $(3) -c $(5)/$(1).cpp $(4) -fpic
+	mv $(1).o $(2)/$(1).o 
+endef
+
 # $1: DIR
 # $2: TARGET
-# $3: Build BIN path (e.g. `../../../build/bin/release_64`)
+# $3: Build BIN path (e.g. `../../build/linux/bin/release_64`)
 define CRONO_MAKE_CLEAN_OUTPUT_FILES_RULE
 	$(call CRONO_MAKE_CLEAN_FILE,$(1)/$(2))
 	$(call CRONO_MAKE_CLEAN_FILE,$(1)/*.o)
@@ -71,7 +107,7 @@ endef
 # $4: SONAME
 # $5: LIBNAME
 # $6: STNAME
-# $7: Build BIN path (e.g. `../../../build/bin/release_64`)
+# $7: Build BIN path (e.g. `../../build/linux/bin/release_64`)
 define CRONO_MAKE_CLEAN_LIB_OUTPUT_FILES_RULE
 	$(call CRONO_MAKE_CLEAN_FILE,$(1)/$(2))
 	$(call CRONO_MAKE_CLEAN_FILE,$(1)/$(3))
@@ -85,7 +121,7 @@ endef
 
 # $1: DIR
 # $2: STNAME
-# $3: Build BIN path (e.g. `../../../build/bin/release_64`)
+# $3: Build BIN path (e.g. `../../build/linux/bin/release_64`)
 define CRONO_MAKE_STATIC_LIB_RULE
 	# Build the static library 
 	ar rcs $(1)/$(2) $(1)/*.o
@@ -103,12 +139,10 @@ endef
 # $6: OBJFILES
 # $7: LDFLAGS
 # $8: `crono_pci_linux(_64).a` Name
-# $9: Build BIN path (e.g. `../../../build/bin/release_64`)
+# $9: Build BIN path (e.g. `../../build/linux/bin/release_64`)
 # Deacription: Create output directory, `SO`, `ST`, and `SLNK`
 define CRONO_MAKE_US_LIBS_RULE
 	@echo Using userspace library: $(1)/$(8)
-	# Build userspace needed library if not found
-	[ -f $(1)/$(8) ] || $(MAKE) -C ../src
 
 	# Create the `/build/xyz_userspace` corresponding directory
 	mkdir -p $(1)
@@ -152,12 +186,10 @@ endef
 # $3: OBJFILES
 # $4: LDFLAGS
 # $5: `crono_pci_linux(_64).a` Name
-# $6: Build BIN path (e.g. `../../../build/bin/release_64`)
+# $6: Build BIN path (e.g. `../../build/linux/bin/release_64`)
 # Deacription: Create output directory and `ST`
 define CRONO_MAKE_STATIC_LIBS_RULE
 	@echo Using userspace library: $(1)/$(5)
-	# Build userspace needed library if not found
-	[ -f $(1)/$(5) ] || $(MAKE) -C ../src
 
 	# Create the `/build/xyz_userspace` corresponding directory
 	mkdir -p $(1)

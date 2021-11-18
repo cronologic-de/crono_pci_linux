@@ -22,6 +22,7 @@ extern "C" {
 #endif
 
 #include "crono_kernel_interface.h"
+#include "crono_linux_kernel.h"
 
 typedef uint64_t DMA_ADDR;
 
