@@ -1,5 +1,5 @@
-#include "crono_linux_kernel.h"
 #include "crono_kernel_interface.h"
+#include "crono_linux_kernel.h"
 #include "crono_userspace.h"
 
 int crono_read_config(unsigned domain, unsigned bus, unsigned dev,
@@ -231,7 +231,7 @@ int crono_get_BAR0_file_size(unsigned domain, unsigned bus, unsigned dev,
 int crono_get_BAR0_mem_addr(unsigned domain, unsigned bus, unsigned dev,
                             unsigned func, pciaddr_t dwOffset, pciaddr_t *size,
                             void **base_mem_addr, void **data_mem_addr) {
-        char BAR0_resource_path[PATH_MAX];
+        char BAR0_resource_path[PATH_MAX - 11]; // 11 for "/resource0"
         int err, fd = -1;
         pciaddr_t BAR0_full_mem_size;
 

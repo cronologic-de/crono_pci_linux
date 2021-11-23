@@ -188,6 +188,15 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                                 goto device_error;
                         }
 
+                        // Open the miscellanous driver file
+                        pDevice->miscdev_fd = open(miscdev_path, O_RDWR);
+                        if (pDevice->miscdev_fd < 0) {
+                                printf("Error %d: cannot open device file "
+                                       "<%s>...\n",
+                                       errno, miscdev_path);
+                                goto device_error;
+                        }
+
                         // Set phDev
                         *phDev = pDevice;
                         break;
@@ -223,23 +232,10 @@ Set card cleanup commands
 uint32_t CRONO_KERNEL_CardCleanupSetup(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                        CRONO_KERNEL_CMD *Cmd,
                                        uint32_t dwCmdCount) {
-
-        char miscdev_path[PATH_MAX];
-        int miscdev_fd;
-
         // Init variables and validate parameters
         CRONO_INIT_HDEV_FUNC(hDev);
-        miscdev_fd = 0;
 
-        // Open device file
-        // Get device file name & open it
-        sprintf(miscdev_path, "/dev/%s", pDevice->miscdev_name);
-        miscdev_fd = open(miscdev_path, O_RDWR);
-        if (miscdev_fd < 0) {
-                printf("Error %d: cannot open device file <%s>...\n", errno,
-                       miscdev_path);
-                return errno;
-        }
+        //$$ Needs Implementation
 
         return CRONO_SUCCESS;
 }
@@ -458,14 +454,12 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
 
         int ret = CRONO_SUCCESS;
         CRONO_BUFFER_INFO buff_info;
-        int miscdev_fd = 0;
-        char miscdev_path[PATH_MAX];
-        CRONO_KERNEL_DMA_SG *pDma;
+        CRONO_KERNEL_DMA_SG *pDma = NULL;
 
         // ______________________________________
         // Init variables and validate parameters
         //
-        CRONO_DEBUG("Locking Buffer of address = <%p>, size = <%u>\n", pBuf,
+        CRONO_DEBUG("Locking Buffer: address <%p>, size <%u>\n", pBuf,
                     dwDMABufSize);
         CRONO_INIT_HDEV_FUNC(hDev);
         CRONO_RET_INV_PARAM_IF_NULL(pBuf);
@@ -475,6 +469,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         // Construct buff_info
         buff_info.addr = pBuf;
         buff_info.size = dwDMABufSize;
+        buff_info.pages = NULL;
 
         // Allocate the DMA Pages Memory
         pDma = (CRONO_KERNEL_DMA_SG *)malloc(sizeof(CRONO_KERNEL_DMA_SG));
@@ -487,7 +482,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         buff_info.pages_count = pDma->dwPages =
             DIV_ROUND_UP(dwDMABufSize, PAGE_SIZE);
         pDma->pUserAddr = pBuf;
-        CRONO_DEBUG("Allocating memory of size = <%lu>, of pages count <%d>\n",
+        CRONO_DEBUG("Allocating memory: size <%lu>, pages count <%d>\n",
                     sizeof(CRONO_KERNEL_DMA_PAGE) * pDma->dwPages,
                     pDma->dwPages);
         pDma->Page = (CRONO_KERNEL_DMA_PAGE *)malloc(
@@ -497,11 +492,11 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
                 free(pDma);
                 return -ENOMEM;
         }
-        CRONO_DEBUG("Allocated `ppDma[0]->Page` of size <%ld>\n",
+        CRONO_DEBUG("Allocated `ppDma[0]->Page`: size <%ld>\n",
                     sizeof(CRONO_KERNEL_DMA_PAGE) * pDma->dwPages);
         *ppDma = pDma; // Do not ppDma = &pDma
 
-        CRONO_DEBUG("Allocating memory of size = <%lu>, of pages count <%d>\n",
+        CRONO_DEBUG("Allocating memory: size <%lu>, pages count <%d>\n",
                     sizeof(uint64_t) * buff_info.pages_count,
                     buff_info.pages_count);
         buff_info.pages =
@@ -514,35 +509,21 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         }
         buff_info.upages = (DMA_ADDR)buff_info.pages;
 
-        // ________________
-        // Open device file
-        //
-        // Get device file name & open it
-        sprintf(miscdev_path, "/dev/%s", pDevice->miscdev_name);
-        miscdev_fd = open(miscdev_path, O_RDWR);
-        if (miscdev_fd < 0) {
-                printf("Error %d: cannot open device file <%s>...\n", errno,
-                       miscdev_path);
-                free(buff_info.pages);
-                free(pDma->Page);
-                free(pDma);
-                return errno;
-        }
-
         // ___________
         // Lock Buffer
         //
-        CRONO_DEBUG("Locking buff_info of address = <%p>, buffer size = <%lu>, "
+        CRONO_DEBUG("Locking buff_info: address <%p>, buffer size <%lu>, "
                     "pages count <%d>\n",
                     &buff_info, buff_info.size, buff_info.pages_count);
-        ret = ioctl(miscdev_fd, IOCTL_CRONO_LOCK_BUFFER, &buff_info);
+        // `pDevice->miscdev_fd` Must be already opened
+        ret = ioctl(pDevice->miscdev_fd, IOCTL_CRONO_LOCK_BUFFER, &buff_info);
         if (CRONO_SUCCESS != ret) {
                 printf("Driver module error %d\n", ret);
                 goto alloc_err;
         }
 
         pDma->id = buff_info.id;
-        CRONO_DEBUG("Copying locked addresses of ID <%d>, pages count <%d>\n",
+        CRONO_DEBUG("Copying locked addresses: ID <%d>, pages count <%d>\n",
                     pDma->id, buff_info.pages_count);
 
         for (uint64_t iPage = 0; iPage < buff_info.pages_count; iPage++) {
@@ -561,15 +542,21 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         // Cleanup
         //
         free(buff_info.pages);
-        // Close device file
-        close(miscdev_fd);
         CRONO_DEBUG("Closed drive\n");
 
         return ret;
 
 alloc_err:
-        if (miscdev_fd > 0)
-                close(miscdev_fd);
+        //$$ free whatever can be freed
+        if (NULL != pDma) {
+                if (NULL != pDma->Page) {
+                        free(pDma->Page);
+                }
+                free(pDma);
+        }
+        if (NULL != buff_info.pages) {
+                free(buff_info.pages);
+        }
 
         return ret;
 }
@@ -577,37 +564,23 @@ alloc_err:
 uint32_t CRONO_KERNEL_DMASGBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                      CRONO_KERNEL_DMA_SG *pDma) {
         int ret = CRONO_SUCCESS;
-        char miscdev_path[PATH_MAX];
-        int miscdev_fd;
 
         // ______________________________________
         // Init variables and validate parameters
         //
         CRONO_INIT_HDEV_FUNC(hDev);
         CRONO_RET_INV_PARAM_IF_NULL(pDma);
-        miscdev_fd = 0;
-
         CRONO_DEBUG("Unlocking buffer id <%d>...\n", pDma->id);
-
-        // ________________
-        // Open device file
-        //
-        // Get device file name & open it
-        sprintf(miscdev_path, "/dev/%s", pDevice->miscdev_name);
-        miscdev_fd = open(miscdev_path, O_RDWR);
-        if (miscdev_fd < 0) {
-                printf("Error %d: cannot open device file <%s>...\n", errno,
-                       miscdev_path);
-                return errno;
-        }
 
         // _____________
         // Unlock Buffer
         //
         // Call ioctl() to unlock the buffer and cleanup
+        // `pDevice->miscdev_fd` Must be already opened
         if (CRONO_SUCCESS !=
-            ioctl(miscdev_fd, IOCTL_CRONO_UNLOCK_BUFFER, &pDma->id)) {
-                goto ioctl_err;
+            (ret = ioctl(pDevice->miscdev_fd, IOCTL_CRONO_UNLOCK_BUFFER,
+                         &pDma->id))) {
+                return ret;
         }
 
         // _______
@@ -620,15 +593,6 @@ uint32_t CRONO_KERNEL_DMASGBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         }
 
         CRONO_DEBUG("Unlocking buffer id <%d> is done.\n", pDma->id);
-        // Close device file
-        close(miscdev_fd);
-
-        return ret;
-
-ioctl_err:
-        if (miscdev_fd > 0)
-                close(miscdev_fd);
-
         return ret;
 }
 
@@ -676,7 +640,7 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_GetDeviceMiscName(
 
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciDriverVersion(
     CRONO_KERNEL_DEVICE_HANDLE hDev, CRONO_KERNEL_VERSION *pVersion) {
-        // Added for windows version compabatilbility
+        // $$ Needs Implemententation
         return CRONO_SUCCESS;
 }
 

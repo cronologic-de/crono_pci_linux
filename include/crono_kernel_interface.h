@@ -83,7 +83,6 @@ typedef struct {
 #endif
         DMA_ADDR pPhysicalAddr; // Physical address of page.
         uint32_t dwBytes;       // Size of buffer.
-                                // $$ or Size of page.
 } CRONO_KERNEL_DMA_CONTIG;
 
 typedef struct {
@@ -349,8 +348,7 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciWriteCfg32(
 // DMA_TO_DEVICE, DMA_ALLOW_64BIT_ADDRESS
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_DMAContigBufLock(
     CRONO_KERNEL_DEVICE_HANDLE hDev, void **ppBuf, uint32_t dwOptions,
-    uint32_t dwDMABufSize,
-    CRONO_KERNEL_DMA_CONTIG **ppDma); //$$ CRONO_KERNEL_DMA_CONTIG
+    uint32_t dwDMABufSize, CRONO_KERNEL_DMA_CONTIG **ppDma);
 
 /* Lock a Scatter/Gather DMA buffer */
 // dwOptions are:	DMA_KERNEL_BUFFER_ALLOC, DMA_KBUF_BELOW_16M,
