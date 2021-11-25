@@ -279,11 +279,12 @@ int crono_get_BAR0_mem_addr(unsigned domain, unsigned bus, unsigned dev,
         offset_page_base_address = PAGE_SIZE * (dwOffset / PAGE_SIZE);
         data_offset_from_page_base = dwOffset % PAGE_SIZE;
 
-        // printf("\nmmap: size = %lu, offset: %lu\n",
-        //    data_offset_from_page_base + (*size), offset_page_base_address) ;
+        CRONO_DEBUG("\nmmap: size = %lu, offset: %lu\n",
+                    data_offset_from_page_base + (*size),
+                    offset_page_base_address);
 
         // Mapping
-        *base_mem_addr = mmap(NULL, // Let kernel chooses the (page-aligned)
+        *base_mem_addr = mmap(NULL, // Let kernel choose the (page-aligned)
                                     // address at which to create the mapping
                               data_offset_from_page_base + (*size),
                               PROT_READ | PROT_WRITE, // Read & Write

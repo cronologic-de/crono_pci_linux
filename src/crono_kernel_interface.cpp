@@ -107,7 +107,7 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
         DIR *dr = NULL;
         struct dirent *en;
         unsigned domain, bus, dev, func;
-        int err;
+        int ret;
 
         // Init variables and validate parameters
         CRONO_RET_INV_PARAM_IF_NULL(phDev);
@@ -151,9 +151,9 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         // Get device `Vendor ID` and `Device ID` and set them
                         // to `pDevice`
                         unsigned int vendor_id, device_id;
-                        err = crono_read_vendor_device(domain, bus, dev, func,
+                        ret = crono_read_vendor_device(domain, bus, dev, func,
                                                        &vendor_id, &device_id);
-                        if (CRONO_SUCCESS != err) {
+                        if (CRONO_SUCCESS != ret) {
                                 goto device_error;
                         }
                         pDevice->dwDeviceId = device_id;
@@ -163,10 +163,10 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         // Map BAR0 full memory starting @ offset 0 to bar_addr
                         void *BAR_base_mem_address;
                         pciaddr_t dwSize = 0;
-                        err = crono_get_BAR0_mem_addr(
+                        ret = crono_get_BAR0_mem_addr(
                             domain, bus, dev, func, 0, &dwSize,
                             &BAR_base_mem_address, NULL);
-                        if (CRONO_SUCCESS != err) {
+                        if (CRONO_SUCCESS != ret) {
                                 goto device_error;
                         }
                         pDevice->bar_addr.pUserDirectMemAddr =
@@ -184,7 +184,7 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         if (stat(miscdev_path, &miscdev_stat) != 0) {
                                 printf("Error: miscdev `%s` is not found.\n",
                                        miscdev_path);
-                                err = -EINVAL;
+                                ret = -EINVAL;
                                 goto device_error;
                         }
 
@@ -213,7 +213,7 @@ device_error:
         if (dr) {
                 closedir(dr);
         }
-        return err;
+        return ret;
 }
 
 uint32_t CRONO_KERNEL_PciDeviceClose(CRONO_KERNEL_DEVICE_HANDLE hDev) {
@@ -232,18 +232,32 @@ Set card cleanup commands
 uint32_t CRONO_KERNEL_CardCleanupSetup(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                        CRONO_KERNEL_CMD *Cmd,
                                        uint32_t dwCmdCount) {
+        int ret = CRONO_SUCCESS;
+        CRONO_KERNEL_CMDS_INFO cmds_info;
+
         // Init variables and validate parameters
         CRONO_INIT_HDEV_FUNC(hDev);
+        cmds_info.cmds =
+            (CRONO_KERNEL_CMD *)calloc(dwCmdCount, sizeof(CRONO_KERNEL_CMD));
+        for (uint32_t i = 0; i < dwCmdCount; i++) {
+                cmds_info.cmds[i].addr = Cmd[i].addr;
+                cmds_info.cmds[i].data = Cmd[i].data;
+        }
+        cmds_info.utrans = (uint64_t)cmds_info.cmds;
+        cmds_info.count = dwCmdCount;
 
-        //$$ Needs Implementation
+        // Call ioctl
+        ret = ioctl(pDevice->miscdev_fd, IOCTL_CRONO_CLEANUP_SETUP, &cmds_info);
 
-        return CRONO_SUCCESS;
+        // Cleanup and return
+        free(cmds_info.cmds);
+        return ret;
 }
 
 uint32_t CRONO_KERNEL_PciReadCfg32(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                    uint32_t dwOffset, uint32_t *val) {
         pciaddr_t bytes_read;
-        int err = CRONO_SUCCESS;
+        int ret = CRONO_SUCCESS;
         pciaddr_t config_space_size = 0;
 
         // Init variables and validate parameters
@@ -251,24 +265,24 @@ uint32_t CRONO_KERNEL_PciReadCfg32(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_RET_INV_PARAM_IF_NULL(val);
 
         // Validate offset and data size are within configuration spcae size
-        err = crono_get_config_space_size(
+        ret = crono_get_config_space_size(
             pDevice->pciSlot.dwDomain, pDevice->pciSlot.dwBus,
             pDevice->pciSlot.dwSlot, pDevice->pciSlot.dwFunction,
             &config_space_size);
-        if (CRONO_SUCCESS != err) {
-                return err;
+        if (CRONO_SUCCESS != ret) {
+                return ret;
         }
         if (config_space_size < (dwOffset + sizeof(*val))) {
                 return -EINVAL;
         }
 
         // Read the configurtion
-        err = crono_read_config(pDevice->pciSlot.dwDomain,
+        ret = crono_read_config(pDevice->pciSlot.dwDomain,
                                 pDevice->pciSlot.dwBus, pDevice->pciSlot.dwSlot,
                                 pDevice->pciSlot.dwFunction, val, dwOffset,
                                 sizeof(*val), &bytes_read);
-        if ((bytes_read != 4) || err) {
-                return err;
+        if ((bytes_read != 4) || ret) {
+                return ret;
         }
 
         // Success
@@ -278,31 +292,31 @@ uint32_t CRONO_KERNEL_PciReadCfg32(CRONO_KERNEL_DEVICE_HANDLE hDev,
 uint32_t CRONO_KERNEL_PciWriteCfg32(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                     uint32_t dwOffset, uint32_t val) {
         pciaddr_t bytes_written;
-        int err = CRONO_SUCCESS;
+        int ret = CRONO_SUCCESS;
         pciaddr_t config_space_size = 0;
 
         // Init variables and validate parameters
         CRONO_INIT_HDEV_FUNC(hDev);
 
         // Validate offset and data size are within configuration spcae size
-        err = crono_get_config_space_size(
+        ret = crono_get_config_space_size(
             pDevice->pciSlot.dwDomain, pDevice->pciSlot.dwBus,
             pDevice->pciSlot.dwSlot, pDevice->pciSlot.dwFunction,
             &config_space_size);
-        if (CRONO_SUCCESS != err) {
-                return err;
+        if (CRONO_SUCCESS != ret) {
+                return ret;
         }
         if (config_space_size < (dwOffset + sizeof(val))) {
                 return -EINVAL;
         }
 
         // Write the configuration
-        err = crono_write_config(
+        ret = crono_write_config(
             pDevice->pciSlot.dwDomain, pDevice->pciSlot.dwBus,
             pDevice->pciSlot.dwSlot, pDevice->pciSlot.dwFunction, &val,
             dwOffset, sizeof(val), &bytes_written);
-        if ((bytes_written != 4) || err) {
-                return err;
+        if ((bytes_written != 4) || ret) {
+                return ret;
         }
 
         // Success
@@ -547,7 +561,6 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         return ret;
 
 alloc_err:
-        //$$ free whatever can be freed
         if (NULL != pDma) {
                 if (NULL != pDma->Page) {
                         free(pDma->Page);
@@ -640,7 +653,7 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_GetDeviceMiscName(
 
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciDriverVersion(
     CRONO_KERNEL_DEVICE_HANDLE hDev, CRONO_KERNEL_VERSION *pVersion) {
-        // $$ Needs Implemententation
+        // Needs Implemententation
         return CRONO_SUCCESS;
 }
 

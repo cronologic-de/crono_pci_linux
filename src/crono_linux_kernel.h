@@ -71,6 +71,18 @@ struct crono_dev_DBDF {
 };
 
 /**
+ * Structure used to hold the clean commands information. It's the object passed
+ * to `ioctl`.
+ */
+typedef struct {
+        CRONO_KERNEL_CMD *cmds;
+        uint64_t utrans; // Is used exchangeably with `cmds`.
+                         // It is mainly provided for backward compatibility
+                         // with kernel versions earlier than 5.6
+        uint32_t count;  // Count of elements in `cmds`
+} CRONO_KERNEL_CMDS_INFO;
+
+/**
  * Command value passed to miscdev ioctl() to lock a memory buffer.
  * 'c' is for `cronologic`.
  */
@@ -83,6 +95,6 @@ struct crono_dev_DBDF {
 /**
  * Command value passed to miscdev ioctl() to cleanup setup
  */
-#define IOCTL_CRONO_CLEANUP_SETUP _IOWR('c', 2, void *)
+#define IOCTL_CRONO_CLEANUP_SETUP _IOWR('c', 2, CRONO_KERNEL_CMDS_INFO *)
 
 #endif // #ifndef _CRONO_LINUX_KERNEL_H_
