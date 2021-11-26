@@ -237,6 +237,13 @@ uint32_t CRONO_KERNEL_CardCleanupSetup(CRONO_KERNEL_DEVICE_HANDLE hDev,
 
         // Init variables and validate parameters
         CRONO_INIT_HDEV_FUNC(hDev);
+        if (pDevice->miscdev_fd <= 0) {
+                printf("Error: CRONO_KERNEL_PciDeviceOpen must be called "
+                       "before calling "
+                       "CRONO_KERNEL_CardCleanupSetup()\n");
+                return -ENOENT;
+        }
+
         cmds_info.cmds =
             (CRONO_KERNEL_CMD *)calloc(dwCmdCount, sizeof(CRONO_KERNEL_CMD));
         for (uint32_t i = 0; i < dwCmdCount; i++) {
@@ -479,6 +486,11 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         CRONO_RET_INV_PARAM_IF_NULL(pBuf);
         CRONO_RET_INV_PARAM_IF_NULL(ppDma);
         CRONO_RET_INV_PARAM_IF_ZERO(dwDMABufSize);
+        if (pDevice->miscdev_fd <= 0) {
+                printf("Error: CRONO_KERNEL_PciDeviceOpen must be called "
+                       "before calling CRONO_KERNEL_CardCleanupSetup()\n");
+                return -ENOENT;
+        }
 
         // Construct buff_info
         buff_info.addr = pBuf;
@@ -552,12 +564,11 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
                         ipage, (void *)(pDma->Page[ipage].pPhysicalAddr));
         }
 #endif
-        // _______
-        // Cleanup
+        // ___________________
+        // Cleanup, and return
         //
+        CRONO_DEBUG("Done locking buffer id <%d>.\n", pDma->id);
         free(buff_info.pages);
-        CRONO_DEBUG("Closed drive\n");
-
         return ret;
 
 alloc_err:
@@ -581,9 +592,15 @@ uint32_t CRONO_KERNEL_DMASGBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         // ______________________________________
         // Init variables and validate parameters
         //
+        CRONO_DEBUG("Unlocking buffer...\n");
         CRONO_INIT_HDEV_FUNC(hDev);
         CRONO_RET_INV_PARAM_IF_NULL(pDma);
-        CRONO_DEBUG("Unlocking buffer id <%d>...\n", pDma->id);
+        CRONO_DEBUG("Buffer: id <%d>\n", pDma->id);
+        if (pDevice->miscdev_fd <= 0) {
+                printf("Error: CRONO_KERNEL_PciDeviceOpen must be called "
+                       "before calling CRONO_KERNEL_CardCleanupSetup()\n");
+                return -ENOENT;
+        }
 
         // _____________
         // Unlock Buffer
@@ -605,7 +622,7 @@ uint32_t CRONO_KERNEL_DMASGBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                 pDma->Page = NULL;
         }
 
-        CRONO_DEBUG("Unlocking buffer id <%d> is done.\n", pDma->id);
+        CRONO_DEBUG("Done unlocking buffer id <%d>.\n", pDma->id);
         return ret;
 }
 

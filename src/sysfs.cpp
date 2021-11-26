@@ -51,8 +51,8 @@ int crono_read_config(unsigned domain, unsigned bus, unsigned dev,
 
 #ifdef CRONO_DEBUG_ENABLED
         for (byte_index = 0; byte_index < size; byte_index++) {
-                printf("Read byte #%03ld: <0x%02X>\n", byte_index,
-                       ((unsigned char *)data)[byte_index]);
+                printf("<%s> Read byte #%03ld: <0x%02X>\n", config_file_path,
+                       byte_index, ((unsigned char *)data)[byte_index]);
         }
 #endif
         return err;
