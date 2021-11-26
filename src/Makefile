@@ -39,7 +39,7 @@ REL64BINPATH    := ../../build/linux/bin/release_64
 #
 # 64 Bit Release rules
 #
-release_64: $(REL64DIR)/$(REL64STNAME) 
+release_64: $(REL64DIR)/$(REL64STNAME) $(REL64BINPATH)/$(REL64STNAME)
 
 $(REL64DIR)/sysfs.o: sysfs.cpp \
 		$(LIBINCPATH)/crono_userspace.h crono_linux_kernel.h
@@ -51,6 +51,10 @@ $(REL64DIR)/crono_kernel_interface.o: crono_kernel_interface.cpp \
 	$(call CRONO_MAKE_LIB_CPP_FILE_RULE,crono_kernel_interface,$(REL64DIR),$(REL64CFLAGS),$(REL64LDFLAGS))
 
 $(REL64DIR)/$(REL64STNAME): $(REL64OBJFILES) 
+	$(call CRONO_MAKE_STATIC_LIB_RULE,$(REL64DIR),$(REL64STNAME),$(REL64BINPATH))
+
+# Build the bin path output if not found 
+$(REL64BINPATH)/$(REL64STNAME): $(REL64DIR)/$(REL64STNAME)
 	$(call CRONO_MAKE_STATIC_LIB_RULE,$(REL64DIR),$(REL64STNAME),$(REL64BINPATH))
 
 cleanrelease_64: 
@@ -70,7 +74,7 @@ DBG64BINPATH    := ../../build/linux/bin/debug_64
 #
 # 64 Bit Debug rules
 #
-debug_64: $(DBG64DIR)/$(DBG64STNAME) 
+debug_64: $(DBG64DIR)/$(DBG64STNAME) $(DBG64BINPATH)/$(DBG64STNAME)
 
 $(DBG64DIR)/sysfs.o: sysfs.cpp \
 		$(LIBINCPATH)/crono_userspace.h crono_linux_kernel.h
@@ -84,6 +88,9 @@ $(DBG64DIR)/crono_kernel_interface.o: crono_kernel_interface.cpp \
 $(DBG64DIR)/$(REL64STNAME): $(DBG64OBJFILES) 
 	$(call CRONO_MAKE_STATIC_LIB_RULE,$(DBG64DIR),$(DBG64STNAME),$(DBG64BINPATH))
 	
+$(DBG64BINPATH)/$(DBG64STNAME): $(DBG64DIR)/$(REL64STNAME)
+	$(call CRONO_MAKE_STATIC_LIB_RULE,$(DBG64DIR),$(DBG64STNAME),$(DBG64BINPATH))
+
 cleandebug_64: 
 	$(call CRONO_MAKE_CLEAN_LIB_OUTPUT_FILES_RULE,	\
 		$(DBG64DIR),$(DBG64TARGET),$(DBG64SLNKNAME),"","",$(DBG64STNAME),$(DBG64BINPATH))
