@@ -47,7 +47,7 @@ typedef struct {
 /**
  * Maximum size of the misdev name string under /dev
  */
-#define CRONO_MAX_DEV_NAME_SIZE 100
+#define CRONO_DEV_NAME_MAX_SIZE 32
 /**
  * pin_user_pages() number of pages per call to be accessed in misdev ioclt().
  */
@@ -59,7 +59,7 @@ typedef struct {
  * @param dbdf[in]: is a valid structure of type `crono_dev_DBDF`.
  */
 #define CRONO_CONSTRUCT_MISCDEV_NAME(dev_name, device_id, dbdf)                \
-        snprintf(dev_name, CRONO_MAX_DEV_NAME_SIZE,                            \
+        snprintf(dev_name, CRONO_DEV_NAME_MAX_SIZE,                            \
                  "crono_%02X_%02X%02X%02X%01X", device_id, dbdf.domain,        \
                  dbdf.bus, dbdf.dev, dbdf.func);
 

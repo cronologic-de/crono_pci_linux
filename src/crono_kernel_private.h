@@ -36,7 +36,7 @@ typedef struct {
 /* Device information struct */
 typedef struct CRONO_KERNEL_DEVICE {
         CRONO_KERNEL_PCI_SLOT
-            pciSlot; // PCI/PCMCIA device slot location information
+        pciSlot; // PCI/PCMCIA device slot location information
         uint32_t dwVendorId;
         uint32_t dwDeviceId;
 
@@ -45,7 +45,7 @@ typedef struct CRONO_KERNEL_DEVICE {
         /**
          * The name of the corresponding `miscdev` file, found under /dev
          */
-        char miscdev_name[CRONO_MAX_DEV_NAME_SIZE];
+        char miscdev_name[CRONO_DEV_NAME_MAX_SIZE];
 
         int miscdev_fd;
 

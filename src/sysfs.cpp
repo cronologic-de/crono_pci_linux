@@ -124,10 +124,13 @@ int crono_write_config(unsigned domain, unsigned bus, unsigned dev,
         while (temp_size > 0) {
                 const ssize_t bytes =
                     pwrite64(fd, data_bytes, temp_size, offset);
-                printf("Writing: File Path %s, Data %d, Size %lu, Offset "
-                       "%08lx, Written Size %ld\n",
-                       config_file_path, *((unsigned int *)data), size, offset,
-                       bytes);
+                // No logging here to save logging milliseconds performance
+                // CRONO_DEBUG("Writing: File Path %s, Data %d, Size %lu, Offset
+                // "
+                //       "%08lx, Written Size %ld\n",
+                //       config_file_path, *((unsigned int *)data), size,
+                //       offset, bytes);
+
                 /* If zero bytes were written, then we assume it's the end of
                  * the config file.
                  */
