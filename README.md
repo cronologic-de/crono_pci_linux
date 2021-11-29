@@ -156,13 +156,6 @@ Or, you can clean a specific build as following:
 .../src$ sudo make cleanrelease_64
 ```
 
-## Set the Library Version
-Set the library version `LIBVER` and `LIBFULLVER` in the [Makefile](./src/Makefile) as following:
-```MAKE
-LIBVER		:= .1
-LIBFULLVER	:= $(LIBVER).0.1
-```
-
 ## More Details
 
 ### Preprocessor Directives

@@ -11,10 +11,6 @@ LIBINCPATH  := ../include
 CRONODRVPATH:= ../driver 
 INC         := -I${shell pwd}/$(LIBINCPATH) 
 
-# Module Full Version: <Version number>.<minor number>.<release number>
-LIBVER		:= .1
-LIBFULLVER	:= $(LIBVER).0.1
-
 #
 # Compiler flags
 #
