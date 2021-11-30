@@ -76,10 +76,10 @@ struct crono_dev_DBDF {
  */
 typedef struct {
         CRONO_KERNEL_CMD *cmds;
-        uint64_t utrans; // Is used exchangeably with `cmds`.
-                         // It is mainly provided for backward compatibility
-                         // with kernel versions earlier than 5.6
-        uint32_t count;  // Count of elements in `cmds`
+        uint64_t ucmds; // Is used exchangeably with `cmds`.
+                        // It is mainly provided for backward compatibility
+                        // with kernel versions earlier than 5.6
+        uint32_t count; // Count of elements in `cmds`
 } CRONO_KERNEL_CMDS_INFO;
 
 /**

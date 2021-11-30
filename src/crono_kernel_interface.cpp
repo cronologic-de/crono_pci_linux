@@ -250,7 +250,7 @@ uint32_t CRONO_KERNEL_CardCleanupSetup(CRONO_KERNEL_DEVICE_HANDLE hDev,
                 cmds_info.cmds[i].addr = Cmd[i].addr;
                 cmds_info.cmds[i].data = Cmd[i].data;
         }
-        cmds_info.utrans = (uint64_t)cmds_info.cmds;
+        cmds_info.ucmds = (uint64_t)cmds_info.cmds;
         cmds_info.count = dwCmdCount;
 
         // Call ioctl
