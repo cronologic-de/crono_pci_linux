@@ -190,10 +190,22 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
 
                         // Open the miscellanous driver file
                         pDevice->miscdev_fd = open(miscdev_path, O_RDWR);
-                        if (pDevice->miscdev_fd < 0) {
+                        switch (errno) {
+                        case 0:
+                                // Success
+                                break;
+                        case EBUSY:
+                                printf("Device is busy, but opened\n");
+                                break;
+                        case ENODEV:
+                                printf("No device found\n");
+                                ret = CRONO_KERNEL_NO_DEVICE_OBJECT;
+                                goto device_error;
+                        default:
                                 printf("Error %d: cannot open device file "
                                        "<%s>...\n",
                                        errno, miscdev_path);
+                                ret = CRONO_KERNEL_INSUFFICIENT_RESOURCES;
                                 goto device_error;
                         }
 
