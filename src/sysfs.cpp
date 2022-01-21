@@ -156,8 +156,8 @@ int crono_write_config(unsigned domain, unsigned bus, unsigned dev,
 int crono_get_sys_devices_directory_path(unsigned domain, unsigned bus,
                                          unsigned dev, unsigned func,
                                          char *pPath) {
-        char dev_slink_path[PATH_MAX];
-        char dev_slink_content_path[PATH_MAX];
+        char dev_slink_path[PATH_MAX];  
+        char dev_slink_content_path[PATH_MAX - 16]; // 16 = "/sys/" + 9
         ssize_t dev_slink_content_len = 0;
 
         CRONO_RET_INV_PARAM_IF_NULL(pPath);
@@ -166,7 +166,7 @@ int crono_get_sys_devices_directory_path(unsigned domain, unsigned bus,
         // e.g. /sys/bus/pci/devices/0000:03:00.0 symbolic link
         CRONO_CONSTRUCT_DEV_SLINK_PATH(dev_slink_path, domain, bus, dev, func);
         dev_slink_content_len =
-            readlink(dev_slink_path, dev_slink_content_path, PATH_MAX - 1);
+            readlink(dev_slink_path, dev_slink_content_path, PATH_MAX - 16);
         if (-1 == dev_slink_content_len) {
                 return errno;
         }
