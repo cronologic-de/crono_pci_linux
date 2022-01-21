@@ -59,12 +59,14 @@ The project is tested on the following **64-bit** distributions:
 ---
 
 # Build the Project
+## Build Using `make`
+
 To build the project, run `make` command:
 ```CMD
 $ make
 ```
 
-## Target Output
+### Target Output
 The build target output is:
 | Output | Builds | Description | 
 | -------- | ------ | ----------- |
@@ -73,7 +75,7 @@ The build target output is:
 
 Temporary build files (e.g. `.o` files) are found under the directory ``./build/crono_pci_linux``.
 
-## Makefiles and Build Versions
+### Makefiles and Build Versions
 The following makefiles are used to build the project versions:
 | Makefile | Builds | Description | 
 | -------- | ------ | ----------- |
@@ -81,50 +83,14 @@ The following makefiles are used to build the project versions:
 | ./src/Makefile | Debug </br> Release | This will build both the `debug` and `release` versions of the project.</br>Make options:</br>- **release_64**: Builds the release version.</br>- **debug_64**: Builds the debug version.</br>- **cleanrelease_64**: Cleans the release version.</br>- **cleandebug_64**: Cleans the debug version.</br>- all: release_64 debug_64.</br>- clean: cleanrelease_64 cleandebug_64.|
 | ./MakefileCommon.mk | None | Contains the common functions used by makefile(s) |
 
-## Build Prerequisites
-### Ubuntu 
-- Make sure that both `make` and `g++` packages are installed, or install them using: 
-```CMD
-sudo apt-get install make g++
-```
-
-### CentOS 
-- Make sure that both `make` and `g++` packages are installed, or install them using: 
-```CMD
-sudo yum install g++ make
-```
-
-### Fedora
-- Make sure that both `make` and `g++` packages are installed, or install them using: 
-```CMD
-sudo yum install g++ make
-```
-- If the kernel development is not installed on your system for the current kernel verision, you can install it as following
-```CMD
-sudo yum install kernel-devel-$(uname -r)
-```
-
-### Debian 
-- Make sure that both `make` and `g++` packages are installed, or install them using: 
-```CMD
-sudo apt-get install make g++
-```
-- Make sure `modules` and `headers` of your current kernel version are installed, or install them using:
-```CMD
-sudo apt-get install linux-headers-$(uname -r) 
-```
-
-### openSUSE
-- Make sure you have **sudo** access.
-- Make sure that both `make` and `g++` packages are installed, or install them using: 
-```CMD
-sudo zypper install make gcc-c++
-```
-- Make sure `modules` and `headers` of your current kernel version are installed, or install them using:
-```CMD
-sudo zypper in kernel-devel kernel-default-devel
-sudo zypper up
-```
+### Build Prerequisites
+| Distribution | Prerequisites | How to install prerequisites | 
+| ------------ | ------------- | ---------------------------- |
+| Ubuntu | `make` and `g++` | ```sudo apt-get install make g++``` |
+| CentOS | `make` and `g++` | ```sudo yum install g++ make``` |
+| Fedora | `make` and `g++` | ```sudo yum install g++ make``` <br>```sudo yum install kernel-devel-$(uname -r)```|
+| Debian | `make` and `g++` | ```sudo apt-get install make g++``` |
+| openSUSE | **sudo** access, `make` and `g++` | ```sudo zypper install make gcc-c++```<br>```sudo zypper in kernel-devel kernel-default-devel```<br>```sudo zypper up``` |
 
 ### General Notes
 * You can check if `make` and `g++` are installed by running the following commands:
@@ -144,8 +110,7 @@ Install package 'gcc-c++' to provide command 'g++'? [N/y]
 ```
 You just enter `y` and accept installing dependencies, if inquired.
 
-
-## Clean the Output Files 
+### Clean the Output Files 
 To clean the project all builds output:
 ```CMD
 make clean
