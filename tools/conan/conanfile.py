@@ -84,7 +84,6 @@ class CronoPciLinuxConan(ConanFile):
         self.copy("src/*", src=proj_src_indir)
         self.copy("include/*", src=proj_src_indir)
         self.copy("tools/*", src=proj_src_indir)
-        self.copy("CMakeLists.txt", src=proj_src_indir)
         self.copy("Makefile", src=proj_src_indir)
         self.copy("MakefileCommon.mk", src=proj_src_indir)
         self.copy("README.md", src=proj_src_indir)
