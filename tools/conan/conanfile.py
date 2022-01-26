@@ -64,8 +64,14 @@ class CronoPciLinuxConan(ConanFile):
     #
     def package(self):
         self._copy_source(False)
-        self.copy("*", src="lib", keep_path=False)
 
+    # __________________________________________________________________________
+    #
+    def deploy(self):
+        # Copy `build' folder from current package to the current dir, only in
+        # case the package is built.
+        self.copy("build/*.*")  
+        
     # ==========================================================================
     # Cronologic Custom Methods
     #
