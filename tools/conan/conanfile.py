@@ -64,14 +64,15 @@ class CronoPciLinuxConan(ConanFile):
     #
     def package(self):
         self._copy_source(False)
+        # Library is not copied to package, as it's always built from source. 
 
     # __________________________________________________________________________
     #
-    def deploy(self):
-        # Copy `build' folder from current package to the current dir, only in
-        # case the package is built.
-        self.copy("build/*.*")  
-        
+    # def deploy(self):
+    # Can't be used to deploy the library to the current folder from which the 
+    # command (e.g. conan install) runs, as the library is not in the package 
+    # in the first place, while self.copy() copies from the package.
+
     # ==========================================================================
     # Cronologic Custom Methods
     #
