@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 2.9) 
 
 set(TARGET_NAME "crono_pci_linux")
+set(CRONO_REQ_PKG_REF "cronologic_linux_kernel-headers/0.0.2")
 project(${TARGET_NAME})
 
 # _____________________________________________________________________________
+# Build `crono_pci_linux.a` static library.
+# Run `conan` to install/build the requirements, to merge them to our target 
+# static library.
 #
 # The file accepts `-DCMAKE_BUILD_TYPE=Debug`, otherwise, it's assumed `Release`.
 # _____________________________________________________________________________
@@ -32,8 +36,8 @@ elseif(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release")
 endif ()
 
-# cd indirection from /tools/cmake to the project source code, "." if no shift
-set(PROJ_SRC_INDIR ../..)  
+# cd indirection from /tools to the project source code, "." if no shift
+set(PROJ_SRC_INDIR ..)  
 
 # All paths are in lower case
 string(TOLOWER ${CMAKE_BUILD_TYPE} CRONO_BUILD_TYPE)
@@ -62,13 +66,13 @@ set(HEADERS
         ${PROJ_SRC_INDIR}/src/crono_kernel_private.h
 )
 
+# Build dependency ____________________________________________________________
+# include(crono_deps.cmake)
+# execute_process(COMMAND pwd)
+# CRONO_BUILD_DEP("<pkg>/<version>" ${CMAKE_BINARY_DIR})
+
 # The target library
 add_library(${TARGET_NAME} STATIC "${SOURCE}" "${HEADERS}")
 
 # Remove the `lib` prefix from the library name
 SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES PREFIX "")
-
-# _____________________________________________________________________________
-# Optional
-#
-set_target_properties(${TARGET_NAME} PROPERTIES VERSION 1.0)

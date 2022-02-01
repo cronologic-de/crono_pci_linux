@@ -35,6 +35,8 @@ class CronoPciLinuxConan(ConanFile):
                 and self.settings.build_type != "Debug":
             self.output.error("Build type <" + str(self.settings.build_type) +
                               "> is not supported")
+        
+        self._crono_init()
 
     # __________________________________________________________________________
     #
@@ -49,15 +51,8 @@ class CronoPciLinuxConan(ConanFile):
     # __________________________________________________________________________
     #
     def build(self):
-        if False == True:
-        # Use meson to build the library
-            meson = Meson(self)
-            meson.configure(source_folder=self.source_folder + "/tools/meson", build_folder="build")
-            meson.build()
-            meson.install()    # Create the .a file on the output path
-
         cmake = CMake(self)
-        cmake.configure(source_folder=self.source_folder + "/tools/cmake")
+        cmake.configure(source_folder=self.source_folder + "/tools")
         cmake.build()
 
     # __________________________________________________________________________
@@ -72,7 +67,7 @@ class CronoPciLinuxConan(ConanFile):
     # Can't be used to deploy the library to the current folder from which the 
     # command (e.g. conan install) runs, as the library is not in the package 
     # in the first place, while self.copy() copies from the package.
-
+    
     # ==========================================================================
     # Cronologic Custom Methods
     #
@@ -81,8 +76,8 @@ class CronoPciLinuxConan(ConanFile):
         # host/package
         if bool(host_context) == True:
             # Copy from original source code to `/export_source`
-            # Current directory is '/tools/conan'
-            proj_src_indir = "../../"
+            # Current directory is '/tools'
+            proj_src_indir = ".."
         else:
             # Copy from `/export_source` to `/package/PackageID`
             # Current directory is `/export_source`
@@ -98,5 +93,15 @@ class CronoPciLinuxConan(ConanFile):
         self.copy(".clang-format", src=proj_src_indir)
         self.copy(".gitignore", src=proj_src_indir)
         # No copy of Build, .vscode, etc...
+
+    # __________________________________________________________________________
+    #
+    def _crono_init(self):
+        self.lib_name = self.name + ".a"
+        # All paths are in lower case
+        self.lib_build_rel_path = "build/lib" \
+                        + "/" + str(self.settings.os).lower() \
+                        + "/" + str(self.settings.arch) \
+                        + "/" + str(self.settings.build_type).lower() 
 
     # __________________________________________________________________________
