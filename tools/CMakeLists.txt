@@ -6,8 +6,6 @@ project(${TARGET_NAME})
 
 # _____________________________________________________________________________
 # Build `crono_pci_linux.a` static library.
-# Run `conan` to install/build the requirements, to merge them to our target 
-# static library.
 #
 # The file accepts `-DCMAKE_BUILD_TYPE=Debug`, otherwise, it's assumed `Release`.
 # _____________________________________________________________________________
@@ -44,7 +42,7 @@ string(TOLOWER ${CMAKE_BUILD_TYPE} CRONO_BUILD_TYPE)
 
 # .a output directory
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY 
-        ${CMAKE_BINARY_DIR}/build/lib/linux/${CMAKE_SYSTEM_PROCESSOR}/${CRONO_BUILD_TYPE}) 
+        ${CMAKE_BINARY_DIR}/build/linux/${CMAKE_SYSTEM_PROCESSOR}/${CRONO_BUILD_TYPE}/lib) 
 message(STATUS "Crono: library output directory is <${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}>")
         
 # Make sure the HEADERS are the same files included internally, use it in both
@@ -65,11 +63,6 @@ set(HEADERS
         ${PROJ_SRC_INDIR}/src/crono_linux_kernel.h
         ${PROJ_SRC_INDIR}/src/crono_kernel_private.h
 )
-
-# Build dependency ____________________________________________________________
-# include(crono_deps.cmake)
-# execute_process(COMMAND pwd)
-# CRONO_BUILD_DEP("<pkg>/<version>" ${CMAKE_BINARY_DIR})
 
 # The target library
 add_library(${TARGET_NAME} STATIC "${SOURCE}" "${HEADERS}")

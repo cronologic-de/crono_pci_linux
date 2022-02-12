@@ -86,8 +86,6 @@ class CronoPciLinuxConan(ConanFile):
         self.copy("src/*", src=proj_src_indir)
         self.copy("include/*", src=proj_src_indir)
         self.copy("tools/*", src=proj_src_indir)
-        self.copy("Makefile", src=proj_src_indir)
-        self.copy("MakefileCommon.mk", src=proj_src_indir)
         self.copy("README.md", src=proj_src_indir)
         self.copy("LICENSE", src=proj_src_indir)
         self.copy(".clang-format", src=proj_src_indir)
@@ -99,9 +97,10 @@ class CronoPciLinuxConan(ConanFile):
     def _crono_init(self):
         self.lib_name = self.name + ".a"
         # All paths are in lower case
-        self.lib_build_rel_path = "build/lib" \
+        self.lib_build_rel_path = "build" \
                         + "/" + str(self.settings.os).lower() \
                         + "/" + str(self.settings.arch) \
-                        + "/" + str(self.settings.build_type).lower() 
+                        + "/" + str(self.settings.build_type).lower() \
+                        + "/lib"
 
     # __________________________________________________________________________
