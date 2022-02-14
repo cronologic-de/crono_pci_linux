@@ -236,8 +236,6 @@ class CronoConanBase(ConanFile):
                     keep_path=False)
 
         elif self.settings.os == "Linux":
-            self.copy("*.a", src=self.lib_build_rel_path, dst="bin", 
-                keep_path=False)
             self.copy("*.so*", src=self.lib_build_rel_path, dst="bin", 
                 keep_path=False)
 
