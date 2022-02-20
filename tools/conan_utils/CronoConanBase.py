@@ -2,6 +2,7 @@
 from conans import ConanFile, CMake
 from conans.errors import ConanInvalidConfiguration
 
+
 class CronoConanBase(ConanFile):
     """
     Description
@@ -9,7 +10,7 @@ class CronoConanBase(ConanFile):
     Base class for Cronologic Conan recipes.
     The class provides default behavior of Conan methods for both library and 
     executable outputs, as well as for both Windows and Linux.
-    
+
 
     Attributes
     --------------
@@ -34,8 +35,8 @@ class CronoConanBase(ConanFile):
         this file in order to be able to upload the package.
     """
 
-    export_source = False 
-    
+    export_source = False
+
     # ==========================================================================
     # Conan Methods
     #
@@ -51,12 +52,28 @@ class CronoConanBase(ConanFile):
 
     # __________________________________________________________________________
     #
+    def package_id(self):
+        """
+        Description
+        --------------
+        Although code is normally compiler-independent, hence, "compiler" is not
+        needed in the settings, but `CMake` and other build system integrations, 
+        if they are building, they need a compiler defined, or they will fail.
+        When adding "compiler" to the settings, Linux conan build fails 
+        sometimes compiler version mismatch, the following lines are needed to 
+        achieve some binary compatibility
+        """
+        self.info.settings.compiler = "any"
+        self.info.settings.compiler.version = "any"
+
+    # __________________________________________________________________________
+    #
     def export_sources(self):
         """
         Description
         --------------
         """
-        if self.export_source: 
+        if self.export_source:
             self._copy_source(True)
 
     # __________________________________________________________________________
@@ -96,7 +113,7 @@ class CronoConanBase(ConanFile):
             When set, executable file (.exe, Linux) will be added to the .
             package `/bin` folder. All files under `/lib` on the package will
             be copied as well, asssumed to be needed by the executable.
-        """        
+        """
         self._crono_init()
         if pack_src:
             self._copy_source(False)
@@ -113,8 +130,8 @@ class CronoConanBase(ConanFile):
         --------------
         Deploys all files under `/lib` and `/bin` on the package folder.
         """
-        self.copy("lib/*", keep_path=False)  
-        self.copy("bin/*", keep_path=False)  
+        self.copy("lib/*", keep_path=False)
+        self.copy("bin/*", keep_path=False)
 
     # ==========================================================================
     # Cronologic Custom Methods
@@ -127,15 +144,15 @@ class CronoConanBase(ConanFile):
         and `bin_build_rel_path`.
         """
         # All paths are in lower case
-        self.config_build_rel_path=  "build"  \
-                        + "/" + str(self.settings.os).lower() \
-                        + "/" + str(self.settings.arch) \
-                        + "/" + str(self.settings.build_type).lower() 
+        self.config_build_rel_path = "build"  \
+            + "/" + str(self.settings.os).lower() \
+            + "/" + str(self.settings.arch) \
+            + "/" + str(self.settings.build_type).lower()
         self.lib_build_rel_path = self.config_build_rel_path + "/lib"
         self.bin_build_rel_path = self.config_build_rel_path + "/bin"
 
     # __________________________________________________________________________
-    # 
+    #
     # Function is used by inherited classes
     def _copy_source(self, host_context):
         """
@@ -171,7 +188,7 @@ class CronoConanBase(ConanFile):
         # No copy of .vscode, etc...
 
     # __________________________________________________________________________
-    # 
+    #
     def _crono_copy_lib_output(self, lib_name):
         """
         Description
@@ -191,18 +208,18 @@ class CronoConanBase(ConanFile):
             lib_file_name = lib_name + ".a"
 
         self.copy(lib_file_name, src=self.lib_build_rel_path,
-            dst="lib", keep_path=False)
-        
+                  dst="lib", keep_path=False)
+
         if self.settings.os == "Windows":
             # Copy DLL for Windows
             self.copy(lib_name + ".dll", src=self.lib_build_rel_path,
-                dst="lib", keep_path=False)
+                      dst="lib", keep_path=False)
 
             if self.settings.build_type == "Debug":
                 # Copy .pdb for Debug
                 self.copy("*.pdb", src=self.lib_build_rel_path,
-                    dst="lib", keep_path=False)
-                    
+                          dst="lib", keep_path=False)
+
     # __________________________________________________________________________
     #
     def _crono_copy_bin_output(self, exec_name):
@@ -223,21 +240,21 @@ class CronoConanBase(ConanFile):
         elif self.settings.os == "Linux":
             exec_file_name = exec_name
 
-        self.copy(exec_file_name, src=self.bin_build_rel_path, dst="bin", 
-            keep_path=False)
+        self.copy(exec_file_name, src=self.bin_build_rel_path, dst="bin",
+                  keep_path=False)
 
         if self.settings.os == "Windows":
-            self.copy("*.dll", src=self.lib_build_rel_path, dst="bin", 
-                keep_path=False)
+            self.copy("*.dll", src=self.lib_build_rel_path, dst="bin",
+                      keep_path=False)
 
             if self.settings.build_type == "Debug":
                 # Copy .pdb for Debug
-                self.copy("*.pdb", src=self.lib_build_rel_path, dst="bin", 
-                    keep_path=False)
+                self.copy("*.pdb", src=self.lib_build_rel_path, dst="bin",
+                          keep_path=False)
 
         elif self.settings.os == "Linux":
-            self.copy("*.so*", src=self.lib_build_rel_path, dst="bin", 
-                keep_path=False)
+            self.copy("*.so*", src=self.lib_build_rel_path, dst="bin",
+                      keep_path=False)
 
     # __________________________________________________________________________
     #
@@ -300,10 +317,10 @@ class CronoConanBase(ConanFile):
             self._crono_validate_windows_only()
         elif all(x in supported_os for x in ['Linux']):
             self._crono_validate_linux_only()
-        else: 
+        else:
             raise ConanInvalidConfiguration(
-                "Crono: Invalid `" + str(supported_os) + "`, it should have "+\
-                    "either or both `Windows` and `Linux")
+                "Crono: Invalid `" + str(supported_os) + "`, it should have " +
+                "either or both `Windows` and `Linux")
 
     # __________________________________________________________________________
     #
