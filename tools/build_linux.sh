@@ -2,7 +2,7 @@ echo ___________________________________________________________________________
 echo Overview:
 echo .
 echo This file is used on development environment to save time writing down all 
-echo commands to build Windows project using MSVC MSBuild.
+echo commands to build project on Linux.
 echo All steps and values should be aligned with the build instructions 
 echo mentioned in the readme file 
 echo https://github.com/cronologic-de/crono_pci_linux/blob/main/README.md.
@@ -10,14 +10,24 @@ echo .
 echo Output is found on ../build/bfD for Debug, and ../build/bfR for Release. 
 echo The batch cleans up the folders and rebuilds the code with every run.
 echo .
+echo flags:
+echo ======
+echo    -c  Build Conan packages and upload them to local cache.
+echo        Values: `N` for No, otherwise it is assumed as Yes.
+echo
 echo Please review values under Custom Values section before you start.
 echo _______________________________________________________________________________
 
 DEBUG_BUILD_DIR="../build/bfD"
 RELEASE_BUILD_DIR="../build/bfR"
 
-read -p "Upload to conan cache ([Y]/N)? " CONAN_UPLOAD
-echo ---> $CONAN_UPLOAD
+CONAN_UPLOAD=""
+while getopts c: flag
+do
+    case "${flag}" in
+        c) CONAN_UPLOAD=${OPTARG};;
+    esac
+done
 
 echo _______________________________________________________________________________
 echo crono: Building x64 Project Buildsystem ...

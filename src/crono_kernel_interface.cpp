@@ -688,5 +688,5 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciDriverVersion(
 
 CRONO_KERNEL_API const char *Stat2Str(uint32_t dwStatus) {
         // Added for windows version compabatilbility
-        return "Status";
+        return "Status\n";
 }
