@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.9) 
 
 set(TARGET_NAME "crono_pci_linux")
-set(CRONO_REQ_PKG_REF "cronologic_linux_kernel-headers/0.0.2")
 project(${TARGET_NAME})
 
 # _____________________________________________________________________________
