@@ -80,8 +80,13 @@ class CronoConanBase(ConanFile):
         ConanFile method, used to copy the source code from local machine to 
         the relevant build/<build-binary> folder of the package. 
         """
+
+        # In `export_source()`, `copy_from_local` is `True` when calling 
+        # `_copy_source`.
         if self.export_source: 
             self._copy_source(copy_from_local=True)
+        elif self.is_headers:
+            self._copy_source(copy_from_local=True,headers_only=True)
         else:
             # Do Nothing 
             return 
@@ -96,6 +101,11 @@ class CronoConanBase(ConanFile):
         Validates that the package is created for one of the supported operating
         """
         self._crono_validate_os()
+
+        if (self.is_headers):
+            self.output.info("Crono: package is `-headers`, `include` should " + 
+                "be copied directly from project folder without build.")
+            return
 
         cmake = CMake(self)
         # When package is built, don't allow cmake to publish the package, 
@@ -125,9 +135,10 @@ class CronoConanBase(ConanFile):
             be copied as well, asssumed to be needed by the executable.
         """
         self._crono_init()
+        # In `package()`, `copy_from_local` is `False` when calling 
+        # `_copy_source`.
         if self.is_headers:
-            # copy from local folder
-            self._copy_source(copy_from_local=False, headers_only=True)  # True:
+            self._copy_source(copy_from_local=False, headers_only=True)
         else:
         # Not `-headers` package
             if pack_src:

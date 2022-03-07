@@ -7,7 +7,7 @@ class CronoPciLinuxConan(CronoConanBase):
     # Values to be reviewed with every new version
     #
     version = "0.0.1"
-    cronologic_linux_kernel_ref = "cronologic_linux_kernel-headers/0.0.1"
+    cronologic_linux_kernel_ref = "cronologic_linux_kernel-headers/[~0.0.1]"
 
     # __________________________________________________________________________
     # Member variables
