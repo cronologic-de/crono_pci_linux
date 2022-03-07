@@ -4,11 +4,27 @@ set(TARGET_NAME "crono_pci_linux")
 project(${TARGET_NAME})
 
 # _____________________________________________________________________________
-# Build `crono_pci_linux.a` static library.
+# Build Linux(x86_64) `crono_pci_linux.a` static library, for (Debug/Release) 
+# configurations.
+# Publish conan package to local cache as per `CRONO_PUBLISH_LOCAL_PKG` 
+# argument.
+# 
+# Arguments:
+# `CRONO_PUBLISH_LOCAL_PKG`: Publish project packages to conan local cache
+# - Passed as `-DCRONO_PUBLISH_LOCAL_PKG=N`
+# - Values:
+#        `N` : Do not publish.
+#    Default : Publish
 #
-# The file accepts `-DCMAKE_BUILD_TYPE=Debug`, otherwise, it's assumed `Release`.
+# Prequisites: 
+# - conan remote server(s) that have the traversal dependencies are added 
+#   and authenticated.
+# - Conan recipe is on the same folder.
 # _____________________________________________________________________________
 
+# _____________________________________________________________________________
+# General Validations and Configurations
+#
 # Check supported architecture
 # CMAKE_GENERATOR_PLATFORM is blank for Ubuntu x86_64 WSL, use instead 
 # CMAKE_SYSTEM_PROCESSOR
@@ -68,3 +84,13 @@ add_library(${TARGET_NAME} STATIC "${SOURCE}" "${HEADERS}")
 
 # Remove the `lib` prefix from the library name
 SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES PREFIX "")
+
+# Publish packages on conan local cache _______________________________ 
+IF (NOT CRONO_PUBLISH_LOCAL_PKG STREQUAL "N")
+        add_custom_command(TARGET ${TARGET_NAME} POST_BUILD 
+                COMMAND "echo" Crono: building and publishing Main Package 
+                                to conan cache... 
+                COMMAND "conan" create ${CMAKE_SOURCE_DIR} 
+                                -s build_type=${CMAKE_BUILD_TYPE}
+                                -s arch=x86_64)
+ENDIF()

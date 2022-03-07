@@ -38,7 +38,7 @@ function(CRONO_BUILD_DEP DEP_PKG_REF CONAN_SRC_FLDR CRONO_BLD_FLDR)
 				message(STATUS "Crono: skipping package folder <${info_line}>")
 				continue()
 			ELSE()
-				message(STATUS "Crono: found required package info lineski <${info_line}>")
+				message(STATUS "Crono: found required package info line <${info_line}>")
 			ENDIF()
 
 			# Get Package Name
@@ -57,11 +57,13 @@ function(CRONO_BUILD_DEP DEP_PKG_REF CONAN_SRC_FLDR CRONO_BLD_FLDR)
 			set(PKG_CMAKE_DIR ${CRONO_LOCAL_PKG_DIR}/${pkg_name}/tools)
 			set(PKG_BUILD_DIR ${CRONO_LOCAL_PKG_DIR}/${pkg_name})
 			IF(EXISTS ${PKG_CMAKE_DIR})
-				# CMake is found for this package, build it
+				# CMake is found for this package, build it, without publishing
+				# the package to local cache, as it's already there.
 				message(STATUS "Crono: building cmake in <${PKG_CMAKE_DIR}>")
 				execute_process(
 					COMMAND cmake 	-B ${PKG_BUILD_DIR} 
 									-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+									-DCRONO_PUBLISH_LOCAL_PKG=N
 					WORKING_DIRECTORY ${PKG_CMAKE_DIR})
 				execute_process(
 					COMMAND cmake --build ${PKG_BUILD_DIR}
