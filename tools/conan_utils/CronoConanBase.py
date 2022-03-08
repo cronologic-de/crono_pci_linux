@@ -102,8 +102,14 @@ class CronoConanBase(ConanFile):
         """
         self._crono_validate_os()
 
+        # For `-bin` and `-headers`, to avoid error building in case it, or
+        # a dependent is called for `conan install --build`, don't proceed.
         if (self.is_headers):
             self.output.info("Crono: package is `-headers`, `include` should " + 
+                "be copied directly from project folder without build.")
+            return
+        if (self.is_bin):
+            self.output.info("Crono: package is `-bin`, binaries should " + 
                 "be copied directly from project folder without build.")
             return
 
