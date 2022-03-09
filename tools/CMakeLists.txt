@@ -90,7 +90,7 @@ IF (NOT CRONO_PUBLISH_LOCAL_PKG STREQUAL "N")
         add_custom_command(TARGET ${TARGET_NAME} POST_BUILD 
                 COMMAND "echo" Crono: exporting Main Package 
                                 to conan local cache... 
-                COMMAND "conan" export-pkg ${CMAKE_SOURCE_DIR} 
+                COMMAND "conan" export-pkg ${CMAKE_SOURCE_DIR} --force
                                 -s build_type=${CMAKE_BUILD_TYPE}
                                 -s arch=x86_64)
 ENDIF()
