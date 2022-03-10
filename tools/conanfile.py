@@ -35,6 +35,6 @@ class CronoPciLinuxConan(CronoConanBase):
     # __________________________________________________________________________
     #
     def package(self):
-        super().package(pack_src=True, lib_name=self.name)
+        super().package(lib_name=self.name)
 
     # __________________________________________________________________________
