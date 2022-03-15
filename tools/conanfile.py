@@ -18,7 +18,7 @@ class CronoPciLinuxConan(CronoConanBase):
     url = "https://conan.cronologic.de/artifactory/prod/_/_/crono_pci_linux/" + version
     description = "Linux user mode driver to support large DMA ring buffers on a PCI bus"
     topics = ["cronologic", "pci", "abstraction", "linux"]
-    settings = ["os", "compiler", "build_type", "arch"]
+    settings = ["os", "compiler", "build_type", "arch", "distro"]
 
     # `CronoConanBase` variables initialization and export
     supported_os = ["Linux"]

@@ -194,6 +194,7 @@ class CronoConanBase(ConanFile):
             self.output.info("Crono: Setting `-headers` package to be "
                 + "arch-build_type-independent.")
             self.info.settings.arch = "any"
+            self.info.settings.distro = "any"
             self.info.settings.build_type = "any"
 
     # ==========================================================================
