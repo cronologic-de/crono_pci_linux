@@ -1,25 +1,25 @@
 echo _______________________________________________________________________________
 echo Overview:
-echo .
+echo "\n"
 echo This file is used on development environment to save time writing down all 
 echo commands to build project on Linux.
 echo All steps and values should be aligned with the build instructions 
 echo mentioned in the readme file 
 echo https://github.com/cronologic-de/crono_pci_linux/blob/main/README.md.
-echo .
+echo "\n"
 echo Output is found on ../build/bfD for Debug, and ../build/bfR for Release. 
 echo The batch cleans up the folders and rebuilds the code with every run.
-echo .
+echo "\n"
 echo flags:
 echo ======
 echo    -c  Build Conan packages and upload them to local cache.
-echo        Values: `N` for No, otherwise it is assumed as Yes.
+echo        Values: N for No, otherwise it is assumed as Yes.
 echo
 echo Please review values under Custom Values section before you start.
 echo _______________________________________________________________________________
 
 BASEDIR=$(dirname "$0") # All paths should be set relative to base directory in case
-                        #  the batch is called from another directory
+                        # the batch is called from another directory
 DEBUG_BUILD_DIR="$BASEDIR/../build/bfD"
 RELEASE_BUILD_DIR="$BASEDIR/../build/bfR"
 
