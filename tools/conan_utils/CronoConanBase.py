@@ -148,7 +148,11 @@ class CronoConanBase(ConanFile):
         else:
         # Not `-headers` package
             if pack_src:
+            # Package full source code
                 self._copy_source(copy_from_local=False)  
+            else:
+            # Headers are packaged for all packages
+                self._copy_source(copy_from_local=False, headers_only=True)
 
         if lib_name != "":
             self._crono_copy_lib_output(lib_name)
@@ -164,10 +168,9 @@ class CronoConanBase(ConanFile):
         Deploys all files fould under `/lib` and `/bin` on the package folder.
         In case of is_headers, it deploys files found under`/include` as well.
         """
-        self.copy("lib/*", keep_path=False)
-        self.copy("bin/*", keep_path=False)
-        if self.is_headers:
-            self.copy("include/*", keep_path=False)
+        self.copy("lib/*")
+        self.copy("bin/*")
+        self.copy("include/*")
 
     # __________________________________________________________________________
     #
@@ -194,8 +197,11 @@ class CronoConanBase(ConanFile):
             self.output.info("Crono: Setting `-headers` package to be "
                 + "arch-build_type-independent.")
             self.info.settings.arch = "any"
-            self.info.settings.distro = "any"
             self.info.settings.build_type = "any"
+        
+        if not self.is_bin:
+        # Only `-bin` package has `distro`` set
+            self.info.settings.distro = "any"
 
     # ==========================================================================
     # Cronologic Custom Methods
@@ -240,8 +246,8 @@ class CronoConanBase(ConanFile):
             # Copy from `/export_source` to `/package/PackageID`
             # Current directory is `/export_source`
             proj_src_indir = ""
-            self.output.info("Crono: copying source from conan binary folder ...")
-
+            self.output.info("Crono: copying source from build/source folder ...")
+        
         # Copy common files to all package types
         self.copy("README.md", src=proj_src_indir)
         self.copy("LICENSE", src=proj_src_indir)
@@ -281,6 +287,8 @@ class CronoConanBase(ConanFile):
         # Make sure the file exists to copy
         lib_full_path = self.build_folder + "/" + self.lib_build_rel_path \
                 + "/" + lib_file_name
+        self.output.info("Conan: copying precompiled binaries from <" 
+            + lib_full_path + ">...")
         if not os.path.exists(lib_full_path):
             raise ConanInvalidConfiguration(
                 "Crono: file <" + lib_full_path + "> is not found." 

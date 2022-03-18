@@ -88,9 +88,12 @@ SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES PREFIX "")
 # Publish packages on conan local cache _______________________________ 
 IF (NOT CRONO_PUBLISH_LOCAL_PKG STREQUAL "N")
         add_custom_command(TARGET ${TARGET_NAME} POST_BUILD 
-                COMMAND "echo" Crono: exporting Main Package 
-                                to conan local cache... 
+                COMMAND "echo" Crono: exporting Main Package to conan 
+                              local cache, from current/build directory
                 COMMAND "conan" export-pkg ${CMAKE_SOURCE_DIR} --force
+                                # Source folder is related to build 
+                                # directory
+                                -sf ../..
                                 -s build_type=${CMAKE_BUILD_TYPE}
                                 -s arch=x86_64)
 ENDIF()
