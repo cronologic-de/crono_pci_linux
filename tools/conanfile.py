@@ -1,8 +1,9 @@
-import sys
-sys.path.append("conan_utils/")
-from CronoConanBase import CronoConanBase
+from conans import ConanFile
 
-class CronoPciLinuxConan(CronoConanBase):
+class CronoPciLinuxConan(ConanFile):
+    python_requires = "crono_utils/0.0.1"
+    python_requires_extend = "crono_utils.CronoConanBase"
+
     # __________________________________________________________________________
     # Values to be reviewed with every new version
     #
@@ -15,7 +16,7 @@ class CronoPciLinuxConan(CronoConanBase):
     name = "crono_pci_linux"
     license = "GPL-3.0 License"
     author = "Bassem Ramzy <SanPatBRS@gmail.com>"
-    url = "https://conan.cronologic.de/artifactory/prod/_/_/crono_pci_linux/" + version
+    url = "https://conan.cronologic.de/artifactory/pub/_/_/crono_pci_linux/" + version
     description = "Linux user mode driver to support large DMA ring buffers on a PCI bus"
     topics = ["cronologic", "pci", "abstraction", "linux"]
     settings = ["os", "compiler", "build_type", "arch", "distro"]
@@ -23,7 +24,6 @@ class CronoPciLinuxConan(CronoConanBase):
     # `CronoConanBase` variables initialization and export
     supported_os = ["Linux"]
     proj_src_indir = ".."
-    exports = "conan_utils/*.py"
     export_source = True
 
     # ==========================================================================
