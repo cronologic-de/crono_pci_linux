@@ -49,6 +49,9 @@ elseif(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release")
 endif ()
 
+set(CRONO_DEP_PKG_DIR ${CMAKE_BINARY_DIR}/dep_pkg)
+set(CRONO_DEP_PKG_INC_DIR ${CRONO_DEP_PKG_DIR}/cronologic_linux_kernel-headers/include)
+
 # cd indirection from /tools to the project source code, "." if no shift
 set(PROJ_SRC_INDIR ..)  
 
@@ -65,7 +68,7 @@ message(STATUS "Crono: library output directory is <${CMAKE_ARCHIVE_OUTPUT_DIREC
 set(CRONO_INC_PATH ${PROJ_SRC_INDIR}/include)    
 
 # Include directories paths
-include_directories(${TARGET_NAME} PRIVATE ${CRONO_INC_PATH})
+include_directories(${TARGET_NAME} PRIVATE ${CRONO_INC_PATH} ${CRONO_DEP_PKG_INC_DIR})
 
 # Source files settings
 set(SOURCE 
@@ -75,7 +78,6 @@ set(SOURCE
 set(HEADERS
         ${CRONO_INC_PATH}/crono_kernel_interface.h
         ${CRONO_INC_PATH}/crono_userspace.h
-        ${PROJ_SRC_INDIR}/src/crono_linux_kernel.h
         ${PROJ_SRC_INDIR}/src/crono_kernel_private.h
 )
 
@@ -85,7 +87,15 @@ add_library(${TARGET_NAME} STATIC "${SOURCE}" "${HEADERS}")
 # Remove the `lib` prefix from the library name
 SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES PREFIX "")
 
-# Publish packages on conan local cache _______________________________ 
+# Copy both the library and headers required __________________________________
+add_custom_target(crono_deps ALL 
+        COMMAND  "echo" Crono: Fetching and deploying dependency using conan.
+        # Install required package to ${CRONO_DEP_PKG_DIR}
+        COMMAND "conan" install ${CMAKE_SOURCE_DIR} -g deploy 
+                --install-folder \"${CRONO_DEP_PKG_DIR}\" -s arch=x86_64)
+add_dependencies(${TARGET_NAME} crono_deps)
+
+# Publish packages on conan local cache _______________________________________ 
 IF (NOT CRONO_PUBLISH_LOCAL_PKG STREQUAL "N")
         add_custom_command(TARGET ${TARGET_NAME} POST_BUILD 
                 COMMAND "echo" Crono: exporting Main Package to conan 
