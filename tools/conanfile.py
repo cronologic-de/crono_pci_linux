@@ -7,8 +7,8 @@ class CronoPciLinuxConan(ConanFile):
     # __________________________________________________________________________
     # Values to be reviewed with every new version
     #
-    version = "0.0.1"
-    cronologic_linux_kernel_ref = "cronologic_linux_kernel-headers/[~0.0.1]"
+    version = "1.0.0"
+    cronologic_kernel_ref = "cronologic_linux_kernel-headers/[~0.0.1]"
 
     # __________________________________________________________________________
     # Member variables
@@ -30,7 +30,7 @@ class CronoPciLinuxConan(ConanFile):
     # Conan Methods
     #
     def requirements(self):
-        self.requires(self.cronologic_linux_kernel_ref)
+        self.requires(self.cronologic_kernel_ref)
 
     # __________________________________________________________________________
     #
