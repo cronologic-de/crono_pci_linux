@@ -690,3 +690,13 @@ CRONO_KERNEL_API const char *Stat2Str(uint32_t dwStatus) {
         // Added for windows version compabatilbility
         return "Status\n";
 }
+
+/* Write byte array tp the PCI configuration space.
+Identify device by handle */
+uint32_t CRONO_KERNEL_PciWriteCfg32Arr(CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset, uint32_t* val, uint32_t arr_size)
+{
+	uint32_t code = CRONO_KERNEL_STATUS_SUCCESS;
+        // Not implemented
+	return code;
+}
+

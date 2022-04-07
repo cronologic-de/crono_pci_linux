@@ -338,6 +338,8 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciReadCfg32(
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciWriteCfg32(
     CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset, uint32_t val);
 
+CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciWriteCfg32Arr(CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset, uint32_t* val, uint32_t arr_size);
+
 /* -----------------------------------------------
     DMA (Direct Memory Access)
    ----------------------------------------------- */
