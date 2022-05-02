@@ -1,13 +1,13 @@
 from conans import ConanFile
 
 class CronoPciLinuxConan(ConanFile):
-    python_requires = "crono_utils/0.0.1"
-    python_requires_extend = "crono_utils.CronoConanBase"
+    python_requires = "crono_conan_base/1.0.0"
+    python_requires_extend = "crono_conan_base.CronoConanBase"
 
     # __________________________________________________________________________
     # Values to be reviewed with every new version
     #
-    version = "1.0.0"
+    version = "1.0.1"
     cronologic_kernel_ref = "cronologic_linux_kernel-headers/[~0.0.1]"
 
     # __________________________________________________________________________
@@ -16,7 +16,7 @@ class CronoPciLinuxConan(ConanFile):
     name = "crono_pci_linux"
     license = "GPL-3.0 License"
     author = "Bassem Ramzy <SanPatBRS@gmail.com>"
-    url = "https://conan.cronologic.de/artifactory/pub/_/_/crono_pci_linux/" + version
+    url = "https://conan.cronologic.de/artifactory/internal/_/_/crono_pci_linux/" + version
     description = "Linux user mode driver to support large DMA ring buffers on a PCI bus"
     topics = ["cronologic", "pci", "abstraction", "linux"]
     settings = ["os", "compiler", "build_type", "arch", "distro"]

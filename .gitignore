@@ -32,4 +32,13 @@
 *.app
 
 .vscode
-build/
+build
+dep_pkg
+tools/build_all.sh 
+tools/crono_common.cmake
+# README of crono_project_tools
+tools/README.md 
+conanmanifest.txt
+conanbuildinfo.txt
+conaninfo.txt
+deploy_manifest.txt
