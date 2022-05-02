@@ -60,7 +60,7 @@ The project is tested on the following **64-bit** distributions:
 
 # Build the Project
 ## Build Prerequisites
-1. Copy the [`cronologic_linux_kernel` headers](https://github.com/cronologic-de/cronologic_linux_kernel/tree/main/include) under `include` folder.
+1. Copy the [`cronologic_linux_kernel` headers](https://github.com/cronologic-de/cronologic_linux_kernel/tree/main/include) under `src` folder.
 
 ## Build Using `make`
 To build the project, run `make` command:
