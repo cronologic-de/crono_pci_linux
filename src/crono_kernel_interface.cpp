@@ -500,7 +500,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         CRONO_RET_INV_PARAM_IF_ZERO(dwDMABufSize);
         if (pDevice->miscdev_fd <= 0) {
                 printf("Error: CRONO_KERNEL_PciDeviceOpen must be called "
-                       "before calling CRONO_KERNEL_CardCleanupSetup()\n");
+                       "before calling CRONO_KERNEL_DMASGBufLock()\n");
                 return -ENOENT;
         }
 
@@ -610,7 +610,7 @@ uint32_t CRONO_KERNEL_DMASGBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_DEBUG("Buffer: id <%d>\n", pDma->id);
         if (pDevice->miscdev_fd <= 0) {
                 printf("Error: CRONO_KERNEL_PciDeviceOpen must be called "
-                       "before calling CRONO_KERNEL_CardCleanupSetup()\n");
+                       "before calling CRONO_KERNEL_DMASGBufUnlock()\n");
                 return -ENOENT;
         }
 
