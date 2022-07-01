@@ -1,13 +1,13 @@
 from conans import ConanFile
 
 class CronoPciLinuxConan(ConanFile):
-    python_requires = "crono_conan_base/1.0.0"
+    python_requires = "crono_conan_base/[~1.0.0]"
     python_requires_extend = "crono_conan_base.CronoConanBase"
 
     # __________________________________________________________________________
     # Values to be reviewed with every new version
     #
-    version = "1.0.1"
+    version = "1.0.2"
     cronologic_kernel_ref = "cronologic_linux_kernel-headers/[~0.0.1]"
 
     # __________________________________________________________________________
