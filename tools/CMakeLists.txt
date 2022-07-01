@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13) 
-set(TARGET_NAME "crono_pci_linux")
-project(${TARGET_NAME})
+set(CRONO_TARGET_NAME "crono_pci_linux")
+project(${CRONO_TARGET_NAME})
 
 # _____________________________________________________________________________
 # Build Linux(x86_64) `crono_pci_linux.a` static library, for (Debug/Release) 
@@ -27,11 +27,12 @@ project(${TARGET_NAME})
 # Install project tools, then include `crono_common.cmake` and initialize it
 IF(NOT EXISTS "${CMAKE_SOURCE_DIR}/crono_common.cmake") 
         message(STATUS "Crono: Installing Cronologic Project Tools ...")
-        execute_process(COMMAND "conan" install crono_project_tools/[~1.0.2]@ 
-                -if ${CMAKE_SOURCE_DIR}) # CMAKE_SOURCE_DIR is the tools folder
+        execute_process(COMMAND "conan" install crono_project_tools/[~1.1.0]@ 
+            -o support_x64_32=False  # Don't support x64_32
+            -if ${CMAKE_SOURCE_DIR}) # CMAKE_SOURCE_DIR is the tools folder
 ENDIF()
-include(${CMAKE_SOURCE_DIR}/crono_common.cmake)
-_crono_cmake_common_init()
+include(${CMAKE_CURRENT_SOURCE_DIR}/crono_common.cmake)
+crono_cmake_common_init()
 
 # Check supported architecture
 IF (NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
@@ -53,15 +54,15 @@ set(HEADERS
 )
 
 # The target library
-add_library(${TARGET_NAME} STATIC "${SOURCE}" "${HEADERS}")
+add_library(${CRONO_TARGET_NAME} STATIC "${SOURCE}" "${HEADERS}")
 
 # Remove the `lib` prefix from the library name
-SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES PREFIX "")
+SET_TARGET_PROPERTIES(${CRONO_TARGET_NAME} PROPERTIES PREFIX "")
 
 # Add dependency to target
-_crono_add_dep_header("${TARGET_NAME}" "cronologic_linux_kernel-headers")
+crono_add_dep_header("cronologic_linux_kernel-headers")
 
 # Publish packages on conan local cache _______________________________________ 
 IF (NOT CRONO_PUBLISH_LOCAL_PKG STREQUAL "N")
-        _crono_target_post_build_export_pkg("${CMAKE_SOURCE_DIR}")
+    crono_target_post_build_export_pkg_main()
 ENDIF()
