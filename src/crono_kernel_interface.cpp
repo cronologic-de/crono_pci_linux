@@ -189,13 +189,17 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         }
 
                         // Open the miscellanous driver file
-                        pDevice->miscdev_fd = open(miscdev_path, O_RDWR);
+                        int miscdev_fd = open(miscdev_path, O_RDWR);
                         switch (errno) {
                         case 0:
                                 // Success
+                                pDevice->miscdev_fd = miscdev_fd;
+                                CRONO_DEBUG("Device <%s> is opened as <%d>.\n", 
+                                    pDevice->miscdev_name, pDevice->miscdev_fd);
                                 break;
                         case EBUSY:
-                                printf("Device is busy, but opened\n");
+                                printf("Device is busy, miscdev_fd is left as is <%d>\n", 
+                                    pDevice->miscdev_fd);
                                 break;
                         case ENODEV:
                                 printf("No device found\n");
