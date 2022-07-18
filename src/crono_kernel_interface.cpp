@@ -37,6 +37,8 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
         uint16_t vendor_id, device_id;
         int index_in_result = 0;
 
+        CRONO_DEBUG("Scanning devices...\n");
+
         if (stat(SYS_BUS_PCIDEVS_PATH, &st) != 0) {
                 printf("Error %d: PCI FS is not found.\n", errno);
                 return errno;
@@ -60,10 +62,17 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
                        &func);
 
                 // Get Vendor ID and Device ID
-                crono_read_vendor_device(domain, bus, dev, func,
-                                         (unsigned int *)&vendor_id,
-                                         (unsigned int *)&device_id);
-
+                int ret = crono_read_vendor_device(domain, bus, dev, func,
+                                         &vendor_id, &device_id);
+                if (CRONO_SUCCESS != ret) {
+                    CRONO_DEBUG("Error <%d> finding devices\n", ret);
+                    closedir(dr);
+                    return ret;
+                }
+                
+                CRONO_DEBUG("Found device <%s> of Vendor ID <0x%02X>, Device ID <0x%02X>\n", 
+                    en->d_name, vendor_id, device_id);
+                
                 // Check values & fill pPciScanResult if device matches the
                 // Vendor/Device
                 if (((vendor_id == dwVendorId) ||
@@ -83,11 +92,15 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
                             func;
                         index_in_result++;
                         pPciScanResult->dwNumDevices = index_in_result;
+                        CRONO_DEBUG("Added matched device in index <%d>\n", 
+                                    index_in_result - 1);
+                } else {
                 }
         }
 
         // Clean up
         closedir(dr);
+        CRONO_DEBUG("Finish scanning devices\n");
 
         // Successfully scanned
         return CRONO_SUCCESS;
@@ -150,7 +163,7 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
 
                         // Get device `Vendor ID` and `Device ID` and set them
                         // to `pDevice`
-                        unsigned int vendor_id, device_id;
+                        uint16_t vendor_id, device_id;
                         ret = crono_read_vendor_device(domain, bus, dev, func,
                                                        &vendor_id, &device_id);
                         if (CRONO_SUCCESS != ret) {

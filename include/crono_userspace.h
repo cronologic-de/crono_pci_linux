@@ -84,8 +84,8 @@ int crono_read_config(unsigned domain, unsigned bus, unsigned dev,
  * @return `CRONO_SUCCESS` in case of no error, or `errno` in case of error.
  */
 int crono_read_vendor_device(unsigned domain, unsigned bus, unsigned dev,
-                             unsigned func, unsigned *pVendor,
-                             unsigned *pDevice);
+                             unsigned func, uint16_t *pVendor,
+                             uint16_t *pDevice);
 
 /**
  * Writes data to devices configuration space using sysfs.
