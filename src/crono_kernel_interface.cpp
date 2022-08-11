@@ -717,3 +717,17 @@ uint32_t CRONO_KERNEL_PciWriteCfg32Arr(CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t
 	return code;
 }
 
+uint32_t CRONO_KERNEL_DMAContigBufLock(
+    CRONO_KERNEL_DEVICE_HANDLE hDev, void **ppBuf, uint32_t dwOptions,
+    uint32_t dwDMABufSize, CRONO_KERNEL_DMA_CONTIG **ppDma)
+{
+        // Needs Implemententation
+        return CRONO_SUCCESS;
+}
+
+uint32_t CRONO_KERNEL_DMAContigBufUnlock(
+    CRONO_KERNEL_DEVICE_HANDLE hDev, CRONO_KERNEL_DMA_CONTIG *pDma)
+{
+        // Needs Implemententation
+        return CRONO_SUCCESS;
+}

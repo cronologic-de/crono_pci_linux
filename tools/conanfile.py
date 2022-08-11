@@ -7,7 +7,7 @@ class CronoPciLinuxConan(ConanFile):
     # __________________________________________________________________________
     # Values to be reviewed with every new version
     #
-    version = "1.0.3"
+    version = "1.0.4"
     cronologic_kernel_ref = "cronologic_linux_kernel-headers/[~0.0.1]"
 
     # __________________________________________________________________________
