@@ -25,13 +25,13 @@ clean: cleanrelease_64 cleandebug_64
 # _____________________________________________________________________________
 # 64 Bit Release build settings
 #
-REL64DIR        := ../../build/linux/crono_pci_linux/release_64
+REL64DIR        := ../build/linux/crono_pci_linux/release_64
 REL64CFLAGS     := -g -Wall -m64 -DUSE_CRONO_KERNEL_DRIVER
 REL64TARGET     := crono_pci_linux
 REL64STNAME     := $(REL64TARGET).a
 REL64LDFLAGS    := -m64
 REL64OBJFILES   := $(REL64DIR)/crono_kernel_interface.o $(REL64DIR)/sysfs.o 	
-REL64BINPATH    := ../../build/linux/bin/release_64
+REL64BINPATH    := ../build/linux/bin/release_64
 #
 # 64 Bit Release rules
 #
@@ -60,13 +60,13 @@ cleanrelease_64:
 # _____________________________________________________________________________
 # 64 Bit Debug build settings
 #
-DBG64DIR        := ../../build/linux/crono_pci_linux/debug_64
+DBG64DIR        := ../build/linux/crono_pci_linux/debug_64
 DBG64CFLAGS     := -g -Wall -m64 -DUSE_CRONO_KERNEL_DRIVER -DCRONO_DEBUG_ENABLED -DDEBUG
 DBG64TARGET     := crono_pci_linux
 DBG64STNAME     := $(DBG64TARGET).a
 DBG64LDFLAGS    := -m64
 DBG64OBJFILES   := $(DBG64DIR)/crono_kernel_interface.o $(DBG64DIR)/sysfs.o 
-DBG64BINPATH    := ../../build/linux/bin/debug_64
+DBG64BINPATH    := ../build/linux/bin/debug_64
 #
 # 64 Bit Debug rules
 #
