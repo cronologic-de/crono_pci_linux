@@ -63,16 +63,17 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
 
                 // Get Vendor ID and Device ID
                 int ret = crono_read_vendor_device(domain, bus, dev, func,
-                                         &vendor_id, &device_id);
+                                                   &vendor_id, &device_id);
                 if (CRONO_SUCCESS != ret) {
-                    CRONO_DEBUG("Error <%d> finding devices\n", ret);
-                    closedir(dr);
-                    return ret;
+                        CRONO_DEBUG("Error <%d> finding devices\n", ret);
+                        closedir(dr);
+                        return ret;
                 }
-                
-                CRONO_DEBUG("Found device <%s> of Vendor ID <0x%02X>, Device ID <0x%02X>\n", 
-                    en->d_name, vendor_id, device_id);
-                
+
+                CRONO_DEBUG("Found device <%s> of Vendor ID <0x%02X>, Device "
+                            "ID <0x%02X>\n",
+                            en->d_name, vendor_id, device_id);
+
                 // Check values & fill pPciScanResult if device matches the
                 // Vendor/Device
                 if (((vendor_id == dwVendorId) ||
@@ -92,7 +93,7 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
                             func;
                         index_in_result++;
                         pPciScanResult->dwNumDevices = index_in_result;
-                        CRONO_DEBUG("Added matched device in index <%d>\n", 
+                        CRONO_DEBUG("Added matched device in index <%d>\n",
                                     index_in_result - 1);
                 } else {
                 }
@@ -207,12 +208,14 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         case 0:
                                 // Success
                                 pDevice->miscdev_fd = miscdev_fd;
-                                CRONO_DEBUG("Device <%s> is opened as <%d>.\n", 
-                                    pDevice->miscdev_name, pDevice->miscdev_fd);
+                                CRONO_DEBUG("Device <%s> is opened as <%d>.\n",
+                                            pDevice->miscdev_name,
+                                            pDevice->miscdev_fd);
                                 break;
                         case EBUSY:
-                                printf("Device is busy, miscdev_fd is left as is <%d>\n", 
-                                    pDevice->miscdev_fd);
+                                printf("Device is busy, miscdev_fd is left as "
+                                       "is <%d>\n",
+                                       pDevice->miscdev_fd);
                                 break;
                         case ENODEV:
                                 printf("No device found\n");
@@ -498,12 +501,29 @@ uint32_t CRONO_KERNEL_GetBarPointer(CRONO_KERNEL_DEVICE_HANDLE hDev,
         return CRONO_SUCCESS;
 }
 
+/**
+ * @brief
+ * - Allocate `ppDma` content.
+ * - "INTERNALLY" allocate `buff_info` (`CRONO_SG_BUFFER_INFO`), used for
+ *   communication with the kernel module.
+ * - Call `ioctl` using `IOCTL_CRONO_LOCK_BUFFER` to allocate kernel internal
+ *   information and lock the buffer, returning physical memory info.
+ * - Fill `ppDma` content with the physical memory info, and `pDma->id` with
+ *   the kernel module buffer id, used for next communication (e.g. unlock).
+ *
+ * @param hDev [in]
+ * @param pBuf [in]
+ * @param dwOptions [in]
+ * @param dwDMABufSize [in]
+ * @param ppDma [out]
+ * @return uint32_t
+ * `CRONO_SUCCESS` or error code.
+ */
 uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
                                    uint32_t dwOptions, uint32_t dwDMABufSize,
                                    CRONO_KERNEL_DMA_SG **ppDma) {
-
         int ret = CRONO_SUCCESS;
-        CRONO_BUFFER_INFO buff_info;
+        CRONO_SG_BUFFER_INFO buff_info;
         CRONO_KERNEL_DMA_SG *pDma = NULL;
 
         // ______________________________________
@@ -614,6 +634,16 @@ alloc_err:
         return ret;
 }
 
+/**
+ * @brief
+ * Unlock the buffer previously locked by `CRONO_KERNEL_DMASGBufLock`. and
+ * clea its data.
+ *
+ * @param hDev [in]
+ * @param pDma [in]
+ * `pDma->id` is the kernel module internal id returned in `lock` function.
+ * @return uint32_t
+ */
 uint32_t CRONO_KERNEL_DMASGBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                      CRONO_KERNEL_DMA_SG *pDma) {
         int ret = CRONO_SUCCESS;
@@ -710,24 +740,127 @@ CRONO_KERNEL_API const char *Stat2Str(uint32_t dwStatus) {
 
 /* Write byte array tp the PCI configuration space.
 Identify device by handle */
-uint32_t CRONO_KERNEL_PciWriteCfg32Arr(CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset, uint32_t* val, uint32_t arr_size)
-{
-	uint32_t code = CRONO_KERNEL_STATUS_SUCCESS;
+uint32_t CRONO_KERNEL_PciWriteCfg32Arr(CRONO_KERNEL_DEVICE_HANDLE hDev,
+                                       uint32_t dwOffset, uint32_t *val,
+                                       uint32_t arr_size) {
+        uint32_t code = CRONO_KERNEL_STATUS_SUCCESS;
         // Not implemented
-	return code;
+        return code;
 }
 
-uint32_t CRONO_KERNEL_DMAContigBufLock(
-    CRONO_KERNEL_DEVICE_HANDLE hDev, void **ppBuf, uint32_t dwOptions,
-    uint32_t dwDMABufSize, CRONO_KERNEL_DMA_CONTIG **ppDma)
-{
-        // Needs Implemententation
-        return CRONO_SUCCESS;
+/**
+ * - If not preallocated (ppDma is null):
+ *   - Allocate `ppDma` content.
+ *   - "INTERNALLY" allocate `buff_info` (`CRONO_CONTIG_BUFFER_INFO`), used for
+ *     communication with the kernel module.
+ *   - Call `ioctl` using `IOCTL_CRONO_LOCK_CONTIG_BUFFER`
+ *     to allocate kernel internal information and lock the buffer , returning
+ *     physical memory info.
+ *   - Fill `ppDma` content with the physical memory info, and `pDma->id` with
+ *     the kernel module buffer id, used for next communication (e.g. unlock).
+ * - If preallocated, jsut return its physical address immediately, as it's
+ *   already locked by kernel module when allocated.
+ *
+ * @param hDev
+ * @param ppBuf
+ * @param dwOptions
+ * @param dwDMABufSize
+ * @param ppDma
+ * @return uint32_t
+ */
+uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
+                                       void **ppBuf, uint32_t dwOptions,
+                                       uint32_t dwDMABufSize,
+                                       CRONO_KERNEL_DMA_CONTIG **ppDma) {
+        // Needs Implemententation $$
+        int ret = CRONO_SUCCESS;
+        CRONO_CONTIG_BUFFER_INFO buff_info;
+        CRONO_KERNEL_DMA_CONTIG *pDma = NULL;
+
+        // ______________________________________
+        // Init variables and validate parameters
+        //
+        CRONO_RET_INV_PARAM_IF_NULL(ppDma);
+        if (*ppDma) {
+                // It's already preallocated
+                CRONO_DEBUG("Locking Preallocated Buffer: size <%u>\n",
+                            dwDMABufSize);
+                CRONO_DEBUG("Done locking buffer id <%d>.\n", (*pDma)->id);
+                // Buffer is "preallocated", just return
+                return ret;
+        }
+
+        // New buffer needs to be allocated
+        CRONO_DEBUG("Allocating and locking Buffer: size <%u>\n", dwDMABufSize);
+
+        CRONO_INIT_HDEV_FUNC(hDev);
+        CRONO_RET_INV_PARAM_IF_NULL(ppBuf);
+        CRONO_RET_INV_PARAM_IF_ZERO(dwDMABufSize);
+        if (pDevice->miscdev_fd <= 0) {
+                printf("Error: CRONO_KERNEL_PciDeviceOpen must be called "
+                       "before calling CRONO_KERNEL_DMAContigBufLock()\n");
+                return -ENOENT;
+        }
+
+        // _______________________
+        // Allocate and Map Buffer
+        //
+        // Initialize `buff_info`
+        memset(&buff_info, 0, sizeof(CRONO_CONTIG_BUFFER_INFO));
+        buff_info.size = dwDMABufSize;
+
+        // Allocate memory
+        // `pDevice->miscdev_fd` Must be already opened
+        ret = ioctl(pDevice->miscdev_fd, IOCTL_CRONO_LOCK_CONTIG_BUFFER,
+                    &buff_info);
+        if (CRONO_SUCCESS != ret) {
+                printf("Driver module error %d\n", ret);
+                return ret;
+        }
+
+        // `mmap` memory to have a safe access to it.
+        // Since memory is allocated using `dma_alloc_coherent`, then it can be
+        // accessed directly here, but this approach may require careful
+        // synchronization when accessing the buffer from user space, especially
+        // in a multi-threaded environment.
+        void *pUserAddr =
+            mmap(NULL, dwDMABufSize, PROT_READ | PROT_WRITE, MAP_SHARED,
+                 pDevice->miscdev_fd, buff_info.addr);
+        if (pUserAddr == MAP_FAILED) {
+                // $$ CRONO_KERNEL_DMAContigBufUnlock
+                perror("Failed to map DMA memory to user space");
+        }
+
+        // __________________________
+        // Fill in returned variables
+        //
+        // Allocate and initialize `pDma`
+        pDma =
+            (CRONO_KERNEL_DMA_CONTIG *)malloc(sizeof(CRONO_KERNEL_DMA_CONTIG));
+        if (NULL == pDma) {
+                // $$ CRONO_KERNEL_DMAContigBufUnlock
+                // $$ unmap
+                printf("Error allocating DMA struct memory");
+                return -ENOMEM;
+        }
+        memset(pDma, 0, sizeof(CRONO_KERNEL_DMA_CONTIG));
+        *ppDma = pDma;
+        pDma->dwBytes = dwDMABufSize;
+        pDma->pPhysicalAddr = buff_info.addr;
+        pDma->pUserAddr = pUserAddr;
+
+        // Set `ppBuf`
+        *ppBuf = pUserAddr;
+
+        // ___________________
+        // Cleanup, and return
+        //
+        CRONO_DEBUG("Done locking buffer id <%d>.\n", buff_info.id);
+        return ret;
 }
 
-uint32_t CRONO_KERNEL_DMAContigBufUnlock(
-    CRONO_KERNEL_DEVICE_HANDLE hDev, CRONO_KERNEL_DMA_CONTIG *pDma)
-{
-        // Needs Implemententation
+uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
+                                         CRONO_KERNEL_DMA_CONTIG *pDma) {
+        // Needs Implemententation $$
         return CRONO_SUCCESS;
 }

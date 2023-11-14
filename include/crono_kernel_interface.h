@@ -75,66 +75,60 @@ typedef struct {
 } CRONO_KERNEL_CMD;
 
 typedef struct {
-#ifdef _WIN32
-        uint32_t hDma;                    // Handle of DMA buffer
-        void *pUserAddr;                  // Beginning of buffer.
-        CRONO_KERNEL_DMA_PAGE SinglePage; // Since this a struct for contig dma
-                                          // buffer only we just have one page
-#endif
-        DMA_ADDR pPhysicalAddr; // Physical address of page.
-        uint32_t dwBytes;       // Size of buffer.
-} CRONO_KERNEL_DMA_CONTIG;
-
-typedef struct {
         //	uint32_t hDma;             // Handle of DMA buffer
         void *pUserAddr;  // Beginning of buffer.
         uint32_t dwPages; // Number of pages in buffer.
-#ifdef _WIN32
-        CRONO_KERNEL_DMA_PAGE
-        Page[256]; // place holder for array of all page addresses, size will be
-                   // set at runtime. We set a fixed size here, so it is simpler
-                   // to implement on kernel mode and easier to debug
-#elif __linux__
         CRONO_KERNEL_DMA_PAGE *Page;
+
         // Kernel Information
         int id; // Internal kernel ID of the buffer
-#endif
 } CRONO_KERNEL_DMA_SG;
 
+typedef struct {
+        uint32_t hDma;    // Handle of DMA buffer
+        void *pUserAddr;  // Beginning of buffer.
+        uint32_t dwBytes; // Size of buffer.
+        DMA_ADDR pPhysicalAddr;
+
+        // Kernel Information
+        int id; // Internal kernel ID of the buffer
+} CRONO_KERNEL_DMA_CONTIG;
+
 // these are dwOptions
-enum { DMA_KERNEL_BUFFER_ALLOC =
-           0x1, // The system allocates a contiguous buffer.
-                // The user does not need to supply linear address.
+enum {
+        DMA_KERNEL_BUFFER_ALLOC =
+            0x1, // The system allocates a contiguous buffer.
+                 // The user does not need to supply linear address.
 
-       DMA_KBUF_BELOW_16M = 0x2, // If DMA_KERNEL_BUFFER_ALLOC is used,
-                                 // this will make sure it is under 16M.
+        DMA_KBUF_BELOW_16M = 0x2, // If DMA_KERNEL_BUFFER_ALLOC is used,
+                                  // this will make sure it is under 16M.
 
-       DMA_LARGE_BUFFER =
-           0x4, // If DMA_LARGE_BUFFER is used,
-                // the maximum number of pages are dwPages, and not
-                // WD_DMA_PAGES. If you lock a user buffer (not a
-                // kernel allocated buffer) that is larger than 1MB,
-                // then use this option and allocate memory for pages.
+        DMA_LARGE_BUFFER =
+            0x4, // If DMA_LARGE_BUFFER is used,
+                 // the maximum number of pages are dwPages, and not
+                 // WD_DMA_PAGES. If you lock a user buffer (not a
+                 // kernel allocated buffer) that is larger than 1MB,
+                 // then use this option and allocate memory for pages.
 
-       DMA_ALLOW_CACHE = 0x8, // Allow caching of contiguous memory.
+        DMA_ALLOW_CACHE = 0x8, // Allow caching of contiguous memory.
 
-       DMA_KERNEL_ONLY_MAP =
-           0x10, // Only map to kernel, dont map to user-mode.
-                 // relevant with DMA_KERNEL_BUFFER_ALLOC flag only
+        DMA_KERNEL_ONLY_MAP =
+            0x10, // Only map to kernel, dont map to user-mode.
+                  // relevant with DMA_KERNEL_BUFFER_ALLOC flag only
 
-       DMA_FROM_DEVICE =
-           0x20, // memory pages are locked to be written by device
+        DMA_FROM_DEVICE =
+            0x20, // memory pages are locked to be written by device
 
-       DMA_TO_DEVICE = 0x40, // memory pages are locked to be read by device
+        DMA_TO_DEVICE = 0x40, // memory pages are locked to be read by device
 
-       DMA_TO_FROM_DEVICE =
-           (DMA_FROM_DEVICE | DMA_TO_DEVICE), // memory pages are
-                                              // locked for both read and write
+        DMA_TO_FROM_DEVICE =
+            (DMA_FROM_DEVICE | DMA_TO_DEVICE), // memory pages are
+                                               // locked for both read and write
 
-       DMA_ALLOW_64BIT_ADDRESS = 0x80, // Use this value for devices that
-                                       // support 64-bit DMA addressing.
+        DMA_ALLOW_64BIT_ADDRESS = 0x80, // Use this value for devices that
+                                        // support 64-bit DMA addressing.
 
-       DMA_ALLOW_NO_HCARD = 0x100, // allow memory lock without hCard
+        DMA_ALLOW_NO_HCARD = 0x100, // allow memory lock without hCard
 };
 
 /* Macros for backward compatibility */
@@ -338,7 +332,9 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciReadCfg32(
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciWriteCfg32(
     CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset, uint32_t val);
 
-CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciWriteCfg32Arr(CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset, uint32_t* val, uint32_t arr_size);
+CRONO_KERNEL_API uint32_t CRONO_KERNEL_PciWriteCfg32Arr(
+    CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset, uint32_t *val,
+    uint32_t arr_size);
 
 /* -----------------------------------------------
     DMA (Direct Memory Access)

@@ -51,11 +51,11 @@ int crono_read_config(unsigned domain, unsigned bus, unsigned dev,
 
 #ifdef CRONO_DEBUG_ENABLED
         printf("Reading configuration at index <0x%08lX>, size <%ld>"
-                ", file path <%s>\n", 
-                offset, size, config_file_path);
+               ", file path <%s>\n",
+               offset, size, config_file_path);
         for (byte_index = 0; byte_index < size; byte_index++) {
-                printf("Read byte #%03ld: <0x%02X>\n",
-                       byte_index, ((unsigned char *)data)[byte_index]);
+                printf("Read byte #%03ld: <0x%02X>\n", byte_index,
+                       ((unsigned char *)data)[byte_index]);
         }
 #endif
         return err;
@@ -66,25 +66,25 @@ int crono_read_vendor_device(unsigned domain, unsigned bus, unsigned dev,
                              uint16_t *pDevice) {
         pciaddr_t bytes_read;
         int err = CRONO_SUCCESS;
-        
-        // Read Vendor ID and Device ID together from configuration space, 
+
+        // Read Vendor ID and Device ID together from configuration space,
         // offset:0, of 4-bytes length. So, offset is DWORD-aligned for the
         // full value.
-        uint32_t vendor_device_val ; 
-        err = crono_read_config(domain, bus, dev, func, &vendor_device_val, 
-                                0, 4, &bytes_read);
+        uint32_t vendor_device_val;
+        err = crono_read_config(domain, bus, dev, func, &vendor_device_val, 0,
+                                4, &bytes_read);
         if ((bytes_read != 4) || err) {
                 return err;
         }
-        
-        *pVendor = ((uint16_t*)&vendor_device_val)[0];
-        *pDevice = ((uint16_t*)&vendor_device_val)[1];
+
+        *pVendor = ((uint16_t *)&vendor_device_val)[0];
+        *pDevice = ((uint16_t *)&vendor_device_val)[1];
 
 #ifdef CRONO_DEBUG_ENABLED
         printf("Read vendor <0x%04X>\n", *pVendor);
         printf("Read device <0x%04X>\n", *pDevice);
 #endif
-        
+
         return err;
 }
 
@@ -162,7 +162,7 @@ int crono_write_config(unsigned domain, unsigned bus, unsigned dev,
 int crono_get_sys_devices_directory_path(unsigned domain, unsigned bus,
                                          unsigned dev, unsigned func,
                                          char *pPath) {
-        char dev_slink_path[PATH_MAX];  
+        char dev_slink_path[PATH_MAX];
         char dev_slink_content_path[PATH_MAX - 16]; // 16 = "/sys/" + 9
         ssize_t dev_slink_content_len = 0;
 

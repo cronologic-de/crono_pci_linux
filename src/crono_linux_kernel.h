@@ -21,6 +21,10 @@
 
 typedef uint64_t DMA_ADDR;
 
+/**
+ * @brief
+ * Buffer info communicated with user space for scatter/gather memory
+ */
 typedef struct {
         // Buffer Information
         void *addr;  // Physical address of buffer, allocated by userspace.
@@ -37,7 +41,19 @@ typedef struct {
 
         // Kernel Information
         int id; // Internal kernel ID of the buffer
-} CRONO_BUFFER_INFO;
+} CRONO_SG_BUFFER_INFO;
+
+/**
+ * @brief
+ * Buffer info communicated with user space for contiguous memory
+ */
+typedef struct {
+        void *addr;  // Physical address of buffer, in userspace
+        size_t size; // Size of the buffer in bytes.
+
+        // Kernel Information
+        int id; // Internal kernel ID of the buffer
+} CRONO_CONTIG_BUFFER_INFO;
 
 /**
  * CRONO PCI Driver Name passed in pci_driver structure, and is found under
@@ -86,7 +102,7 @@ typedef struct {
  * Command value passed to miscdev ioctl() to lock a memory buffer.
  * 'c' is for `cronologic`.
  */
-#define IOCTL_CRONO_LOCK_BUFFER _IOWR('c', 0, CRONO_BUFFER_INFO *)
+#define IOCTL_CRONO_LOCK_BUFFER _IOWR('c', 0, CRONO_SG_BUFFER_INFO *)
 /**
  * Command value passed to miscdev ioctl() to unlock a memory buffer
  * 'c' is for `cronologic`. Passing buffer wrapper ID in kernel module.
@@ -96,5 +112,15 @@ typedef struct {
  * Command value passed to miscdev ioctl() to cleanup setup
  */
 #define IOCTL_CRONO_CLEANUP_SETUP _IOWR('c', 2, CRONO_KERNEL_CMDS_INFO *)
+/**
+ * Command value passed to miscdev ioctl() to lock a contiguour memory buffer.
+ * 'c' is for `cronologic`.
+ */
+#define IOCTL_CRONO_LOCK_CONTIG_BUFFER _IOWR('c', 3, CRONO_CONTIG_BUFFER_INFO *)
+/**
+ * Command value passed to miscdev ioctl() to unlock a contiguous memory buffer
+ * 'c' is for `cronologic`. Passing buffer wrapper ID in kernel module.
+ */
+#define IOCTL_CRONO_UNLOCK_CONTIG_BUFFER _IOWR('c', 4, int *)
 
 #endif // #ifndef _CRONO_LINUX_KERNEL_H_
