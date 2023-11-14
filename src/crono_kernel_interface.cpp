@@ -772,7 +772,6 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                        void **ppBuf, uint32_t dwOptions,
                                        uint32_t dwDMABufSize,
                                        CRONO_KERNEL_DMA_CONTIG **ppDma) {
-        // Needs Implemententation $$
         int ret = CRONO_SUCCESS;
         CRONO_CONTIG_BUFFER_INFO buff_info;
         CRONO_KERNEL_DMA_CONTIG *pDma = NULL;
@@ -785,7 +784,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                 // It's already preallocated
                 CRONO_DEBUG("Locking Preallocated Buffer: size <%u>\n",
                             dwDMABufSize);
-                CRONO_DEBUG("Done locking buffer id <%d>.\n", (*pDma)->id);
+                CRONO_DEBUG("Done locking buffer id <%d>.\n", pDma->id);
                 // Buffer is "preallocated", just return
                 return ret;
         }
@@ -825,7 +824,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         // in a multi-threaded environment.
         void *pUserAddr =
             mmap(NULL, dwDMABufSize, PROT_READ | PROT_WRITE, MAP_SHARED,
-                 pDevice->miscdev_fd, buff_info.addr);
+                 pDevice->miscdev_fd, (off_t)(buff_info.addr));
         if (pUserAddr == MAP_FAILED) {
                 // $$ CRONO_KERNEL_DMAContigBufUnlock
                 perror("Failed to map DMA memory to user space");
@@ -846,7 +845,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         memset(pDma, 0, sizeof(CRONO_KERNEL_DMA_CONTIG));
         *ppDma = pDma;
         pDma->dwBytes = dwDMABufSize;
-        pDma->pPhysicalAddr = buff_info.addr;
+        pDma->pPhysicalAddr = (DMA_ADDR)buff_info.addr;
         pDma->pUserAddr = pUserAddr;
 
         // Set `ppBuf`
@@ -862,5 +861,42 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
 uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                          CRONO_KERNEL_DMA_CONTIG *pDma) {
         // Needs Implemententation $$
+        int ret = CRONO_SUCCESS;
+
+        // ______________________________________
+        // Init variables and validate parameters
+        //
+        CRONO_DEBUG("Unlocking buffer...\n");
+        CRONO_INIT_HDEV_FUNC(hDev);
+        CRONO_RET_INV_PARAM_IF_NULL(pDma);
+        CRONO_DEBUG("Buffer: id <%d>\n", pDma->id);
+        if (pDevice->miscdev_fd <= 0) {
+                printf("Error: CRONO_KERNEL_PciDeviceOpen must be called "
+                       "before calling CRONO_KERNEL_DMAContigBufUnlock()\n");
+                return -ENOENT;
+        }
+
+        // _____________
+        // Unlock Buffer
+        //
+        // Call ioctl() to unlock the buffer and cleanup
+        // `pDevice->miscdev_fd` Must be already opened
+        if (CRONO_SUCCESS !=
+            (ret = ioctl(pDevice->miscdev_fd, IOCTL_CRONO_UNLOCK_CONTIG_BUFFER,
+                         &pDma->id))) {
+                printf("Driver module error %d\n", ret);
+                return ret;
+        }
+
+        // _______
+        // Cleanup
+        //
+        // Unmap and free memory
+        if (munmap(pDma->pUserAddr, pDma->dwBytes) < 0) {
+                printf("Failed to unmap memory\n");
+        }
+        free(pDma);
+
+        CRONO_DEBUG("Done unlocking buffer id <%d>.\n", pDma->id);
         return CRONO_SUCCESS;
 }
