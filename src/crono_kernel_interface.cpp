@@ -680,7 +680,8 @@ uint32_t CRONO_KERNEL_DMASGBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                 free(pDma->Page);
                 pDma->Page = NULL;
         }
-
+        free(pDma);     // Preallocated in `CRONO_KERNEL_DMASGBufLock`
+        
         CRONO_DEBUG("Done unlocking buffer id <%d>.\n", pDma->id);
         return ret;
 }
