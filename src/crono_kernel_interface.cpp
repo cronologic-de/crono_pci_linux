@@ -616,7 +616,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         // ___________________
         // Cleanup, and return
         //
-        CRONO_DEBUG("Done locking buffer id <%d>.\n", pDma->id);
+        CRONO_DEBUG("Done locking SG buffer id <%d>.\n", pDma->id);
         free(buff_info.pages);
         return ret;
 
@@ -680,8 +680,8 @@ uint32_t CRONO_KERNEL_DMASGBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                 free(pDma->Page);
                 pDma->Page = NULL;
         }
-        free(pDma);     // Preallocated in `CRONO_KERNEL_DMASGBufLock`
-        
+        free(pDma); // Preallocated in `CRONO_KERNEL_DMASGBufLock`
+
         CRONO_DEBUG("Done unlocking buffer id <%d>.\n", pDma->id);
         return ret;
 }
@@ -785,13 +785,16 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                 // It's already preallocated
                 CRONO_DEBUG("Locking Preallocated Buffer: size <%u>\n",
                             dwDMABufSize);
-                CRONO_DEBUG("Done locking buffer id <%d>.\n", pDma->id);
+                CRONO_DEBUG(
+                    "Done locking preallocated contiguous buffer id <%d>.\n",
+                    pDma->id);
                 // Buffer is "preallocated", just return
                 return ret;
         }
 
         // New buffer needs to be allocated
-        CRONO_DEBUG("Allocating and locking Buffer: size <%u>\n", dwDMABufSize);
+        CRONO_DEBUG("Allocating and locking Contiguous Buffer: size <%u>\n",
+                    dwDMABufSize);
 
         CRONO_INIT_HDEV_FUNC(hDev);
         CRONO_RET_INV_PARAM_IF_NULL(ppBuf);
@@ -823,13 +826,13 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         // accessed directly here, but this approach may require careful
         // synchronization when accessing the buffer from user space, especially
         // in a multi-threaded environment.
-        void *pUserAddr =
-            mmap(NULL, dwDMABufSize, PROT_READ | PROT_WRITE, MAP_SHARED,
-                 pDevice->miscdev_fd, (off_t)(buff_info.addr));
-        if (pUserAddr == MAP_FAILED) {
-                // $$ CRONO_KERNEL_DMAContigBufUnlock
-                perror("Failed to map DMA memory to user space");
-        }
+        void *pUserAddr = buff_info.addr;
+        //     mmap(NULL, dwDMABufSize, PROT_READ | PROT_WRITE, MAP_SHARED,
+        //          pDevice->miscdev_fd, (off_t)(buff_info.addr));
+        // if (pUserAddr == MAP_FAILED) {
+        //         // $$ CRONO_KERNEL_DMAContigBufUnlock
+        //         perror("Failed to map DMA memory to user space");
+        // }
 
         // __________________________
         // Fill in returned variables
@@ -855,7 +858,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         // ___________________
         // Cleanup, and return
         //
-        CRONO_DEBUG("Done locking buffer id <%d>.\n", buff_info.id);
+        CRONO_DEBUG("Done locking contiguous buffer id <%d>.\n", buff_info.id);
         return ret;
 }
 
@@ -892,10 +895,10 @@ uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         // _______
         // Cleanup
         //
-        // Unmap and free memory
-        if (munmap(pDma->pUserAddr, pDma->dwBytes) < 0) {
-                printf("Failed to unmap memory\n");
-        }
+        // Unmap and free memory - no map is done
+        // if (munmap(pDma->pUserAddr, pDma->dwBytes) < 0) {
+        //         printf("Failed to unmap memory\n");
+        // }
         free(pDma);
 
         CRONO_DEBUG("Done unlocking buffer id <%d>.\n", pDma->id);

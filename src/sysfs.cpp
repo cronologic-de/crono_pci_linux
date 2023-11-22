@@ -80,9 +80,9 @@ int crono_read_vendor_device(unsigned domain, unsigned bus, unsigned dev,
         *pVendor = ((uint16_t *)&vendor_device_val)[0];
         *pDevice = ((uint16_t *)&vendor_device_val)[1];
 
-#ifdef CRONO_DEBUG_ENABLED
-        printf("Read vendor <0x%04X>\n", *pVendor);
-        printf("Read device <0x%04X>\n", *pDevice);
+#ifdef CRONO_DEBUG_ENABLED // Uncomment if device is not recognized
+        // printf("Read vendor <0x%04X>\n", *pVendor);
+        // printf("Read device <0x%04X>\n", *pDevice);
 #endif
 
         return err;
