@@ -836,10 +836,12 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         *ppDma = pDma;
         pDma->dwBytes = dwDMABufSize;
         pDma->pPhysicalAddr = (DMA_ADDR)buff_info.addr;
+        pDma->id = buff_info.id;
 
         // `mmap` `offset` argument should be aligned on a page boundary, so the
         // buffer id is sent to `mmap` multiplied by PAGE_SIZE.
-        CRONO_DEBUG("Mapping buffer ID: <%d>, offset <%d>\n", buff_info.id, buff_info.id * PAGE_SIZE);
+        CRONO_DEBUG("Mapping buffer ID: <%d>, offset <%d>\n", buff_info.id,
+                    buff_info.id * PAGE_SIZE);
         buff_info.pUserAddr = pDma->pUserAddr =
             mmap(NULL, dwDMABufSize, PROT_READ | PROT_WRITE, MAP_SHARED,
                  pDevice->miscdev_fd, buff_info.id * PAGE_SIZE);
