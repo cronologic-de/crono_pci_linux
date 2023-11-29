@@ -50,13 +50,14 @@ int crono_read_config(unsigned domain, unsigned bus, unsigned dev,
         close(fd);
 
 #ifdef CRONO_DEBUG_ENABLED
-        printf("Reading configuration at index <0x%08lX>, size <%ld>"
-               ", file path <%s>\n",
-               offset, size, config_file_path);
-        for (byte_index = 0; byte_index < size; byte_index++) {
-                printf("Read byte #%03ld: <0x%02X>\n", byte_index,
-                       ((unsigned char *)data)[byte_index]);
-        }
+        // Uncomment for detailed debug
+        // printf("Reading configuration at index <0x%08lX>, size <%ld>"
+        //        ", file path <%s>\n",
+        //        offset, size, config_file_path);
+        // for (byte_index = 0; byte_index < size; byte_index++) {
+        //         printf("Read byte #%03ld: <0x%02X>\n", byte_index,
+        //                ((unsigned char *)data)[byte_index]);
+        // }
 #endif
         return err;
 }
