@@ -812,6 +812,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         memset(&buff_info, 0, sizeof(CRONO_CONTIG_BUFFER_INFO));
         buff_info.size = dwDMABufSize;
 
+        printf("$$ before calling ioctl\n");
         // Allocate memory
         // `pDevice->miscdev_fd` Must be already opened
         ret = ioctl(pDevice->miscdev_fd, IOCTL_CRONO_LOCK_CONTIG_BUFFER,
@@ -821,19 +822,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                 return ret;
         }
 
-        // `mmap` memory to have a safe access to it.
-        // Since memory is allocated using `dma_alloc_coherent`, then it can be
-        // accessed directly here, but this approach may require careful
-        // synchronization when accessing the buffer from user space, especially
-        // in a multi-threaded environment.
-        void *pUserAddr = buff_info.addr;
-        //     mmap(NULL, dwDMABufSize, PROT_READ | PROT_WRITE, MAP_SHARED,
-        //          pDevice->miscdev_fd, (off_t)(buff_info.addr));
-        // if (pUserAddr == MAP_FAILED) {
-        //         // $$ CRONO_KERNEL_DMAContigBufUnlock
-        //         perror("Failed to map DMA memory to user space");
-        // }
-
+        printf("$$ before calling malloc\n");
         // __________________________
         // Fill in returned variables
         //
@@ -842,7 +831,6 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
             (CRONO_KERNEL_DMA_CONTIG *)malloc(sizeof(CRONO_KERNEL_DMA_CONTIG));
         if (NULL == pDma) {
                 // $$ CRONO_KERNEL_DMAContigBufUnlock
-                // $$ unmap
                 printf("Error allocating DMA struct memory");
                 return -ENOMEM;
         }
@@ -850,15 +838,30 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         *ppDma = pDma;
         pDma->dwBytes = dwDMABufSize;
         pDma->pPhysicalAddr = (DMA_ADDR)buff_info.addr;
-        pDma->pUserAddr = pUserAddr;
+
+        // `mmap` `offset` argument should be aligned on a page boundary, so the
+        // buffer id is sent to `mmap` multiplied by PAGE_SIZE.
+        printf("$$ before calling mmap. Size: <%d>, ID: <%d>\n", dwDMABufSize, buff_info.id);
+        buff_info.pUserAddr = pDma->pUserAddr =
+            mmap(NULL, dwDMABufSize, PROT_READ | PROT_WRITE, MAP_SHARED,
+                 pDevice->miscdev_fd, buff_info.id * PAGE_SIZE);
+        if (pDma->pUserAddr == MAP_FAILED) {
+                // $$ CRONO_KERNEL_DMAContigBufUnlock
+                // $$ free pDma
+                perror("Failed to map DMA memory to user space");
+                return -ENOMEM;
+        }
+        printf("$$ mmap called");
 
         // Set `ppBuf`
-        *ppBuf = pUserAddr;
+        *ppBuf = buff_info.pUserAddr;
 
         // ___________________
         // Cleanup, and return
         //
-        CRONO_DEBUG("Done locking contiguous buffer id <%d>.\n", buff_info.id);
+        CRONO_DEBUG("Done locking contiguous buffer id <%d>."
+                    "Physical address: <%p>, User Address <%p>",
+                    buff_info.id, buff_info.addr, buff_info.pUserAddr);
         return ret;
 }
 
@@ -896,9 +899,9 @@ uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         // Cleanup
         //
         // Unmap and free memory - no map is done
-        // if (munmap(pDma->pUserAddr, pDma->dwBytes) < 0) {
-        //         printf("Failed to unmap memory\n");
-        // }
+        if (munmap(pDma->pUserAddr, pDma->dwBytes) < 0) {
+                printf("Failed to unmap memory\n");
+        }
         free(pDma);
 
         CRONO_DEBUG("Done unlocking buffer id <%d>.\n", pDma->id);
