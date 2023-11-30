@@ -835,7 +835,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         memset(pDma, 0, sizeof(CRONO_KERNEL_DMA_CONTIG));
         *ppDma = pDma;
         pDma->dwBytes = dwDMABufSize;
-        pDma->pPhysicalAddr = (DMA_ADDR)buff_info.addr;
+        pDma->pPhysicalAddr = (DMA_ADDR)buff_info.dma_handle;
         pDma->id = buff_info.id;
 
         // `mmap` `offset` argument should be aligned on a page boundary, so the
@@ -860,7 +860,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         //
         CRONO_DEBUG("Done locking contiguous buffer id <%d>."
                     "Physical address: <%p>, User Address <%p>\n",
-                    buff_info.id, buff_info.addr, buff_info.pUserAddr);
+                    buff_info.id, pDma->pPhysicalAddr, buff_info.pUserAddr);
         return ret;
 }
 
