@@ -37,8 +37,6 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
         uint16_t vendor_id, device_id;
         int index_in_result = 0;
 
-        CRONO_DEBUG("Scanning devices...\n");
-
         if (stat(SYS_BUS_PCIDEVS_PATH, &st) != 0) {
                 printf("Error %d: PCI FS is not found.\n", errno);
                 return errno;
@@ -70,10 +68,6 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
                         return ret;
                 }
 
-                CRONO_DEBUG("Found device <%s> of Vendor ID <0x%02X>, Device "
-                            "ID <0x%02X>\n",
-                            en->d_name, vendor_id, device_id);
-
                 // Check values & fill pPciScanResult if device matches the
                 // Vendor/Device
                 if (((vendor_id == dwVendorId) ||
@@ -101,7 +95,6 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
 
         // Clean up
         closedir(dr);
-        CRONO_DEBUG("Finish scanning devices\n");
 
         // Successfully scanned
         return CRONO_SUCCESS;
@@ -840,8 +833,6 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
 
         // `mmap` `offset` argument should be aligned on a page boundary, so the
         // buffer id is sent to `mmap` multiplied by PAGE_SIZE.
-        CRONO_DEBUG("Mapping buffer ID: <%d>, offset <%d>\n", buff_info.id,
-                    buff_info.id * PAGE_SIZE);
         buff_info.pUserAddr = pDma->pUserAddr =
             mmap(NULL, dwDMABufSize, PROT_READ | PROT_WRITE, MAP_SHARED,
                  pDevice->miscdev_fd, buff_info.id * PAGE_SIZE);
