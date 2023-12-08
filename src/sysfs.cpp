@@ -11,9 +11,10 @@ int crono_read_config(unsigned domain, unsigned bus, unsigned dev,
         int err = CRONO_SUCCESS;
         int fd;
         char *data_bytes = (char *)data;
-#ifdef CRONO_DEBUG_ENABLED
-        pciaddr_t byte_index;
-#endif
+// Uncomment for detailed debug
+// #ifdef CRONO_DEBUG_ENABLED
+//         pciaddr_t byte_index;
+// #endif
         if (bytes_read != NULL) {
                 *bytes_read = 0;
         }
@@ -78,8 +79,8 @@ int crono_read_vendor_device(unsigned domain, unsigned bus, unsigned dev,
                 return err;
         }
 
-        *pVendor = ((uint16_t *)&vendor_device_val)[0];
-        *pDevice = ((uint16_t *)&vendor_device_val)[1];
+        *pVendor = (uint16_t)(vendor_device_val & 0xFFFF);
+        *pDevice = (uint16_t)(vendor_device_val >> 16);
 
 #ifdef CRONO_DEBUG_ENABLED // Uncomment if device is not recognized
         // printf("Read vendor <0x%04X>\n", *pVendor);

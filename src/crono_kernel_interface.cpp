@@ -850,7 +850,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         // Cleanup, and return
         //
         CRONO_DEBUG("Done locking contiguous buffer id <%d>."
-                    "Physical address: <%p>, User Address <%p>\n",
+                    "Physical address: <0x%lx>, User Address <%p>\n",
                     buff_info.id, pDma->pPhysicalAddr, buff_info.pUserAddr);
         return ret;
 }
