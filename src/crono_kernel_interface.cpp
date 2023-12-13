@@ -863,7 +863,6 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
 
 uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                          CRONO_KERNEL_DMA_CONTIG *pDma) {
-        // Needs Implemententation $$
         int ret = CRONO_SUCCESS;
 
         // ______________________________________
