@@ -30,6 +30,7 @@ d*/
 PCRONO_KERNEL_DEVICE devices[8];
 int iNewDev = 0;   // New device index in `devices`
 void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice);
+void freeDevicesMem();
 
 uint32_t
 CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
@@ -40,6 +41,8 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
         unsigned domain, bus, dev, func;
         uint16_t vendor_id, device_id;
         int index_in_result = 0;
+
+        freeDevicesMem();
 
         if (stat(SYS_BUS_PCIDEVS_PATH, &st) != 0) {
                 printf("Error %d: PCI FS is not found.\n", errno);
@@ -912,9 +915,17 @@ void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
     }
 }
 
-extern "C" __attribute__((destructor)) void onUnload() {   
+void freeDevicesMem() {
     for (int iDev = 0; iDev < iNewDev; iDev++) {
-        if(devices[iDev]) free(devices[iDev]);
+        if(devices[iDev]) { 
+            free(devices[iDev]);
+            devices[iDev] = nullptr;    // reset
+        }
     }
+    iNewDev = 0;
+}
+
+extern "C" __attribute__((destructor)) void onUnload() {   
+    freeDevicesMem();
 }
 
