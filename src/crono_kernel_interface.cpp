@@ -27,6 +27,11 @@ d*/
                 return -ENOMEM;                                                \
         }
 
+PCRONO_KERNEL_DEVICE devices[8];
+int iNewDev = 0;   // New device index in `devices`
+void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice);
+void freeDevicesMem();
+
 uint32_t
 CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
                             CRONO_KERNEL_PCI_SCAN_RESULT *pPciScanResult) {
@@ -36,6 +41,8 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
         unsigned domain, bus, dev, func;
         uint16_t vendor_id, device_id;
         int index_in_result = 0;
+
+        freeDevicesMem();
 
         if (stat(SYS_BUS_PCIDEVS_PATH, &st) != 0) {
                 printf("Error %d: PCI FS is not found.\n", errno);
@@ -145,6 +152,8 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         PCRONO_KERNEL_DEVICE pDevice;
                         pDevice = (PCRONO_KERNEL_DEVICE)malloc(
                             sizeof(CRONO_KERNEL_DEVICE));
+                        // Save value if a later cleanup is needed
+                        devices[iNewDev++] = pDevice;
                         memset(pDevice, 0, sizeof(CRONO_KERNEL_DEVICE));
 
                         // Set `pDevice` slot information
@@ -246,7 +255,7 @@ uint32_t CRONO_KERNEL_PciDeviceClose(CRONO_KERNEL_DEVICE_HANDLE hDev) {
         CRONO_INIT_HDEV_FUNC(hDev);
 
         // Free memory allocated in CRONO_KERNEL_PciDeviceOpen
-        free(pDevice);
+        freeDeviceMem(pDevice);
 
         return CRONO_SUCCESS;
 }
@@ -857,7 +866,6 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
 
 uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                          CRONO_KERNEL_DMA_CONTIG *pDma) {
-        // Needs Implemententation $$
         int ret = CRONO_SUCCESS;
 
         // ______________________________________
@@ -897,3 +905,27 @@ uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_DEBUG("Done unlocking buffer id <%d>.\n", pDma->id);
         return CRONO_SUCCESS;
 }
+
+void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
+    for (int iDev = 0; iDev < iNewDev; iDev++) {
+        if(pDevice == devices[iDev]) {
+            free(devices[iDev]);
+            devices[iDev] = nullptr;    // avoid double free
+        }
+    }
+}
+
+void freeDevicesMem() {
+    for (int iDev = 0; iDev < iNewDev; iDev++) {
+        if(devices[iDev]) { 
+            free(devices[iDev]);
+            devices[iDev] = nullptr;    // reset
+        }
+    }
+    iNewDev = 0;
+}
+
+extern "C" __attribute__((destructor)) void onUnload() {   
+    freeDevicesMem();
+}
+

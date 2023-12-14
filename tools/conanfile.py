@@ -7,7 +7,7 @@ class CronoPciLinuxConan(ConanFile):
     # __________________________________________________________________________
     # Values to be reviewed with every new version
     #
-    version = "1.1.0"
+    version = "1.1.1"
 
     # __________________________________________________________________________
     # Member variables
