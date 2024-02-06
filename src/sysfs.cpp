@@ -98,8 +98,8 @@ int crono_get_config_space_size(unsigned domain, unsigned bus, unsigned dev,
         CRONO_CONSTRUCT_CONFIG_FILE_PATH(config_file_path, domain, bus, dev,
                                          func);
         if (stat(config_file_path, &st) != 0) {
-                printf("Error %d: Error getting configuration file stat.\n",
-                       errno);
+                printf("Error %d: Error getting configuration file stat of %s.\n",
+                       errno, config_file_path);
                 return errno;
         }
         if (NULL != pSize) {

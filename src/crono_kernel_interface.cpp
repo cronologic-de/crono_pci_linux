@@ -42,7 +42,8 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
         uint16_t vendor_id, device_id;
         int index_in_result = 0;
 
-        freeDevicesMem();
+        // Don't freeDevicesMem() as devices may be counted again 
+        // while a device is already open for any reason.
 
         if (stat(SYS_BUS_PCIDEVS_PATH, &st) != 0) {
                 printf("Error %d: PCI FS is not found.\n", errno);
@@ -907,11 +908,17 @@ uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
 }
 
 void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
-    for (int iDev = 0; iDev < iNewDev; iDev++) {
+    int iDev;
+    for (iDev = 0; iDev < iNewDev; iDev++) {
         if(pDevice == devices[iDev]) {
             free(devices[iDev]);
             devices[iDev] = nullptr;    // avoid double free
         }
+    }
+    // Shrink array for null elements at the end if found
+    while (iNewDev > 0 && devices[iNewDev] == nullptr) {
+        // Last element in the array is empty, shrink it
+        iNewDev --;
     }
 }
 
