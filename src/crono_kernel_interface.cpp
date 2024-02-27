@@ -123,6 +123,7 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
         struct dirent *en;
         unsigned domain, bus, dev, func;
         int ret;
+        PCRONO_KERNEL_DEVICE pDevice = nullptr;
 
         // Init variables and validate parameters
         CRONO_RET_INV_PARAM_IF_NULL(phDev);
@@ -150,7 +151,6 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                     (pDeviceInfo->pciSlot.dwSlot == dev) &&
                     (pDeviceInfo->pciSlot.dwFunction == func)) {
                         // Allocate `pDevice` memory
-                        PCRONO_KERNEL_DEVICE pDevice;
                         pDevice = (PCRONO_KERNEL_DEVICE)malloc(
                             sizeof(CRONO_KERNEL_DEVICE));
                         // Save value if a later cleanup is needed
@@ -207,19 +207,24 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
 
                         // Open the miscellanous driver file
                         int miscdev_fd = open(miscdev_path, O_RDWR);
-                        switch (errno) {
-                        case 0:
+                        if (miscdev_fd > 0) {
                                 // Success
                                 pDevice->miscdev_fd = miscdev_fd;
                                 CRONO_DEBUG("Device <%s> is opened as <%d>.\n",
-                                            pDevice->miscdev_name,
-                                            pDevice->miscdev_fd);
+                                                pDevice->miscdev_name,
+                                                pDevice->miscdev_fd);
+                                // Set phDev
+                                *phDev = pDevice;
                                 break;
+                        }
+                        // Error opening the device
+                        switch (errno) {
                         case EBUSY:
-                                printf("Device is busy, miscdev_fd is left as "
-                                       "is <%d>\n",
+                                // Mostly returned by the OS
+                                printf("Device of file descriptor <%d> is busy\n",
                                        pDevice->miscdev_fd);
-                                break;
+                                ret = CRONO_KERNEL_TRY_AGAIN;
+                                goto device_error;
                         case ENODEV:
                                 printf("No device found\n");
                                 ret = CRONO_KERNEL_NO_DEVICE_OBJECT;
@@ -231,9 +236,6 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                                 ret = CRONO_KERNEL_INSUFFICIENT_RESOURCES;
                                 goto device_error;
                         }
-
-                        // Set phDev
-                        *phDev = pDevice;
                         break;
                 }
         }
@@ -248,12 +250,27 @@ device_error:
         if (dr) {
                 closedir(dr);
         }
+        if (pDevice != nullptr) {
+                free(pDevice);
+        }
         return ret;
 }
 
 uint32_t CRONO_KERNEL_PciDeviceClose(CRONO_KERNEL_DEVICE_HANDLE hDev) {
         // Init variables and validate parameters
         CRONO_INIT_HDEV_FUNC(hDev);
+        
+        // Close the device
+        if (-1 == close(pDevice->miscdev_fd)) {
+                // Error 
+                printf("Error %d: cannot close device file descriptor "
+                        "<%d>...\n",
+                        errno, pDevice->miscdev_fd);
+                return errno;
+        }
+        CRONO_DEBUG("Device <%s> is closed as <%d>.\n",
+                        pDevice->miscdev_name,
+                        pDevice->miscdev_fd);
 
         // Free memory allocated in CRONO_KERNEL_PciDeviceOpen
         freeDeviceMem(pDevice);
