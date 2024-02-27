@@ -50,7 +50,7 @@ typedef struct {
 typedef struct {
         size_t size; // Size of the buffer in bytes.
 
-        void *addr; // Memory physical address
+        void *addr; // Processor's (kernel) virtual address space
         void *pUserAddr;
         uint64_t dma_handle;
 
