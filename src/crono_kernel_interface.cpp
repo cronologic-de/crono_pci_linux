@@ -565,6 +565,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         buff_info.addr = pBuf;
         buff_info.size = dwDMABufSize;
         buff_info.pages = NULL;
+        buff_info.id = -1;      // Initialize with invalid value
 
         // Allocate the DMA Pages Memory
         pDma = (CRONO_KERNEL_DMA_SG *)malloc(sizeof(CRONO_KERNEL_DMA_SG));
@@ -692,6 +693,8 @@ uint32_t CRONO_KERNEL_DMASGBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
                 return ret;
         }
 
+        CRONO_DEBUG("Done unlocking buffer id <%d>.\n", pDma->id);
+
         // _______
         // Cleanup
         //
@@ -702,7 +705,6 @@ uint32_t CRONO_KERNEL_DMASGBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         }
         free(pDma); // Preallocated in `CRONO_KERNEL_DMASGBufLock`
 
-        CRONO_DEBUG("Done unlocking buffer id <%d>.\n", pDma->id);
         return ret;
 }
 
@@ -831,6 +833,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         // Initialize `buff_info`
         memset(&buff_info, 0, sizeof(CRONO_CONTIG_BUFFER_INFO));
         buff_info.size = dwDMABufSize;
+        buff_info.id = -1;
 
         // Allocate memory
         // `pDevice->miscdev_fd` Must be already opened
