@@ -28,7 +28,7 @@ d*/
         }
 
 PCRONO_KERNEL_DEVICE devices[8];
-int iNewDev = 0;   // New device index in `devices`
+int iNewDev = 0; // New device index in `devices`
 void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice);
 void freeDevicesMem();
 
@@ -42,7 +42,7 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
         uint16_t vendor_id, device_id;
         int index_in_result = 0;
 
-        // Don't freeDevicesMem() as devices may be counted again 
+        // Don't freeDevicesMem() as devices may be counted again
         // while a device is already open for any reason.
 
         if (stat(SYS_BUS_PCIDEVS_PATH, &st) != 0) {
@@ -171,6 +171,8 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         ret = crono_read_vendor_device(domain, bus, dev, func,
                                                        &vendor_id, &device_id);
                         if (CRONO_SUCCESS != ret) {
+                                printf("Error getting vendor\n");
+                                ret = CRONO_KERNEL_TRY_AGAIN;
                                 goto device_error;
                         }
                         pDevice->dwDeviceId = device_id;
@@ -184,6 +186,10 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                             domain, bus, dev, func, 0, &dwSize,
                             &BAR_base_mem_address, NULL);
                         if (CRONO_SUCCESS != ret) {
+                                printf(
+                                    "Error getting BAR0 memory address <%d>\n",
+                                    ret);
+                                ret = CRONO_KERNEL_TRY_AGAIN;
                                 goto device_error;
                         }
                         pDevice->bar_addr.pUserDirectMemAddr =
@@ -211,8 +217,8 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                                 // Success
                                 pDevice->miscdev_fd = miscdev_fd;
                                 CRONO_DEBUG("Device <%s> is opened as <%d>.\n",
-                                                pDevice->miscdev_name,
-                                                pDevice->miscdev_fd);
+                                            pDevice->miscdev_name,
+                                            pDevice->miscdev_fd);
                                 // Set phDev
                                 *phDev = pDevice;
                                 break;
@@ -221,8 +227,9 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         switch (errno) {
                         case EBUSY:
                                 // Mostly returned by the OS
-                                printf("Device of file descriptor <%d> is busy\n",
-                                       pDevice->miscdev_fd);
+                                printf(
+                                    "Device of file descriptor <%d> is busy\n",
+                                    pDevice->miscdev_fd);
                                 ret = CRONO_KERNEL_TRY_AGAIN;
                                 goto device_error;
                         case ENODEV:
@@ -246,6 +253,7 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
         // Successfully scanned
         return CRONO_SUCCESS;
 
+// Called after `iNewDev` is incremented with the new device
 device_error:
         if (dr) {
                 closedir(dr);
@@ -253,24 +261,24 @@ device_error:
         if (pDevice != nullptr) {
                 free(pDevice);
         }
+        iNewDev--; // Device freed, drop it from `devices`
         return ret;
 }
 
 uint32_t CRONO_KERNEL_PciDeviceClose(CRONO_KERNEL_DEVICE_HANDLE hDev) {
         // Init variables and validate parameters
         CRONO_INIT_HDEV_FUNC(hDev);
-        
+
         // Close the device
         if (-1 == close(pDevice->miscdev_fd)) {
-                // Error 
+                // Error
                 printf("Error %d: cannot close device file descriptor "
-                        "<%d>...\n",
-                        errno, pDevice->miscdev_fd);
+                       "<%d>...\n",
+                       errno, pDevice->miscdev_fd);
                 return errno;
         }
-        CRONO_DEBUG("Device <%s> is closed as <%d>.\n",
-                        pDevice->miscdev_name,
-                        pDevice->miscdev_fd);
+        CRONO_DEBUG("Device <%s> is closed as <%d>.\n", pDevice->miscdev_name,
+                    pDevice->miscdev_fd);
 
         // Free memory allocated in CRONO_KERNEL_PciDeviceOpen
         freeDeviceMem(pDevice);
@@ -565,7 +573,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         buff_info.addr = pBuf;
         buff_info.size = dwDMABufSize;
         buff_info.pages = NULL;
-        buff_info.id = -1;      // Initialize with invalid value
+        buff_info.id = -1; // Initialize with invalid value
 
         // Allocate the DMA Pages Memory
         pDma = (CRONO_KERNEL_DMA_SG *)malloc(sizeof(CRONO_KERNEL_DMA_SG));
@@ -928,31 +936,28 @@ uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
 }
 
 void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
-    int iDev;
-    for (iDev = 0; iDev < iNewDev; iDev++) {
-        if(pDevice == devices[iDev]) {
-            free(devices[iDev]);
-            devices[iDev] = nullptr;    // avoid double free
+        int iDev;
+        for (iDev = 0; iDev < iNewDev; iDev++) {
+                if (pDevice == devices[iDev]) {
+                        free(devices[iDev]);
+                        devices[iDev] = nullptr; // avoid double free
+                }
         }
-    }
-    // Shrink array for null elements at the end if found
-    while (iNewDev > 0 && devices[iNewDev] == nullptr) {
-        // Last element in the array is empty, shrink it
-        iNewDev --;
-    }
+        // Shrink array for null elements at the end if found
+        while (iNewDev > 0 && devices[iNewDev] == nullptr) {
+                // Last element in the array is empty, shrink it
+                iNewDev--;
+        }
 }
 
 void freeDevicesMem() {
-    for (int iDev = 0; iDev < iNewDev; iDev++) {
-        if(devices[iDev]) { 
-            free(devices[iDev]);
-            devices[iDev] = nullptr;    // reset
+        for (int iDev = 0; iDev < iNewDev; iDev++) {
+                if (devices[iDev]) {
+                        free(devices[iDev]);
+                        devices[iDev] = nullptr; // reset
+                }
         }
-    }
-    iNewDev = 0;
+        iNewDev = 0;
 }
 
-extern "C" __attribute__((destructor)) void onUnload() {   
-    freeDevicesMem();
-}
-
+extern "C" __attribute__((destructor)) void onUnload() { freeDevicesMem(); }
