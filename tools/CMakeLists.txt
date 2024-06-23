@@ -56,9 +56,6 @@ set(HEADERS
 # The target library
 add_library(${CRONO_TARGET_NAME} STATIC "${SOURCE}" "${HEADERS}")
 
-# Remove the `lib` prefix from the library name
-SET_TARGET_PROPERTIES(${CRONO_TARGET_NAME} PROPERTIES PREFIX "")
-
 # Publish packages on conan local cache _______________________________________ 
 IF (NOT CRONO_PUBLISH_LOCAL_PKG STREQUAL "N")
     crono_target_post_build_export_pkg_main()

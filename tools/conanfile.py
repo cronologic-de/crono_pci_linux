@@ -7,7 +7,7 @@ class CronoPciLinuxConan(ConanFile):
     # __________________________________________________________________________
     # Values to be reviewed with every new version
     #
-    version = "1.2.2"
+    version = "1.3.0"
 
     # __________________________________________________________________________
     # Member variables
@@ -32,6 +32,6 @@ class CronoPciLinuxConan(ConanFile):
     # __________________________________________________________________________
     #
     def package(self):
-        super().package(lib_name=self.name)
+        super().package(lib_name="lib"+self.name)
 
     # __________________________________________________________________________

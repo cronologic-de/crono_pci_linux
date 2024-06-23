@@ -17,7 +17,7 @@ The initial code has been written by [Bassem Ramzy](https://github.com/Bassem-Ra
 ---
 
 # The Project
-The project generates `crono_pci_linux.a` static lbrary that is used by applications that need to access the kernel driver.
+The project generates `libcrono_pci_linux.a` static lbrary that is used by applications that need to access the kernel driver.
 
 ## Architecture
 <p align="center">
@@ -72,8 +72,8 @@ $ make
 The build target output is:
 | Output | Builds | Description | 
 | -------- | ------ | ----------- |
-| `crono_pci_linux.a` | ``./build/bin/release_64/`` | The release version of the userspace static library |
-| `crono_pci_linux.a` | ``./build/bin/debug_64/`` | The debug version of the userspace static library |
+| `libcrono_pci_linux.a` | ``./build/bin/release_64/`` | The release version of the userspace static library |
+| `libcrono_pci_linux.a` | ``./build/bin/debug_64/`` | The debug version of the userspace static library |
 
 Temporary build files (e.g. `.o` files) are found under the directory ``./build/crono_pci_linux``.
 
@@ -133,7 +133,7 @@ Or, you can clean a specific build as following:
 ---
 
 # Usage 
-The library is provided mainly as a static library `crono_pci_linux.a` to be used by other applications to handle the devices.
+The library is provided mainly as a static library `libcrono_pci_linux.a` to be used by other applications to handle the devices.
 
 ## Header Files
 All the provided APIs and macros are found in the header file [``crono_kernel_interface.h``](./include/crono_kernel_interface.h). 
