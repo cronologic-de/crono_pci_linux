@@ -938,10 +938,16 @@ uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
 void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
         int iDev;
         for (iDev = 0; iDev < iNewDev; iDev++) {
-                if (pDevice == devices[iDev]) {
-                        free(devices[iDev]);
-                        devices[iDev] = nullptr; // avoid double free
+                if (pDevice != devices[iDev]) 
+                    continue ;
+                if (pDevice->bar_addr.pUserDirectMemAddr) {
+                        if (munmap((void*)pDevice->bar_addr.pUserDirectMemAddr, pDevice->bar_addr.dwSize) == -1) 
+                        { 
+                                printf("Error %d: munmap\n", errno);
+                        }
                 }
+                free(devices[iDev]);
+                devices[iDev] = nullptr; // avoid double free
         }
         // Shrink array for null elements at the end if found
         while (iNewDev > 0 && devices[iNewDev] == nullptr) {
