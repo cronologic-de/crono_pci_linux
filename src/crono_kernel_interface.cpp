@@ -19,17 +19,16 @@
  * Validates that both `dwOffset` and `val` size are within the memory range.
  * Returns '-ENOMEM' if not.
  * Is part of the functions in this file, a prerequisite to have all used
-variables
- * defined and initialized in the functions.
-d*/
+ * variables defined and initialized in the functions. Applies only on BAR0
+ */
 #define CRONO_VALIDATE_MEM_RANGE                                               \
-        if ((dwOffset + sizeof(val)) > pDevice->bar_addr.dwSize) {             \
+        if ((dwOffset + sizeof(val)) > pDevice->bar_addr[0].dwSize) {          \
                 return -ENOMEM;                                                \
         }
 
 PCRONO_KERNEL_DEVICE devices[8];
 int iNewDev = 0; // New device index in `devices`
-void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice);
+uint32_t freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice);
 void freeDevicesMem();
 
 uint32_t
@@ -178,8 +177,9 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         pDevice->dwDeviceId = device_id;
                         pDevice->dwVendorId = vendor_id;
 
-                        // Set bar_addr
-                        // Map BAR0 full memory starting @ offset 0 to bar_addr
+                        // Set bar_addr[0]
+                        // Map BAR0 full memory starting @ offset 0 to
+                        // bar_addr[0]
                         void *BAR_base_mem_address;
                         pciaddr_t dwSize = 0;
                         ret = crono_get_BAR0_mem_addr(
@@ -192,9 +192,9 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                                 ret = CRONO_KERNEL_TRY_AGAIN;
                                 goto device_error;
                         }
-                        pDevice->bar_addr.pUserDirectMemAddr =
+                        pDevice->bar_addr[0].pUserDirectMemAddr =
                             (size_t)BAR_base_mem_address;
-                        pDevice->bar_addr.dwSize = dwSize;
+                        pDevice->bar_addr[0].dwSize = dwSize;
 
                         // Get the device `miscdev` file name, and set it to
                         // `pDevice`
@@ -247,6 +247,10 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                 }
         }
 
+        uint32_t barCount;
+        CRONO_KERNEL_BAR_DESC barDescs[6];
+        CRONO_KERNEL_GetBarDescriptions(*phDev, &barCount, barDescs);
+
         // Clean up
         closedir(dr);
 
@@ -267,6 +271,7 @@ device_error:
 
 uint32_t CRONO_KERNEL_PciDeviceClose(CRONO_KERNEL_DEVICE_HANDLE hDev) {
         // Init variables and validate parameters
+        int ret = CRONO_SUCCESS;
         CRONO_INIT_HDEV_FUNC(hDev);
 
         // Close the device
@@ -281,9 +286,12 @@ uint32_t CRONO_KERNEL_PciDeviceClose(CRONO_KERNEL_DEVICE_HANDLE hDev) {
                     pDevice->miscdev_fd);
 
         // Free memory allocated in CRONO_KERNEL_PciDeviceOpen
-        freeDeviceMem(pDevice);
+        ret = freeDeviceMem(pDevice);
+        if (CRONO_SUCCESS != ret) {
+                return ret;
+        }
 
-        return CRONO_SUCCESS;
+        return ret;
 }
 
 /* -----------------------------------------------
@@ -398,10 +406,10 @@ uint32_t CRONO_KERNEL_ReadAddr8(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *val = *(
-            (volatile unsigned char
-                 *)(((unsigned char *)(pDevice->bar_addr.pUserDirectMemAddr)) +
-                    dwOffset));
+        *val = *((volatile unsigned char
+                      *)(((unsigned char *)(pDevice->bar_addr[0]
+                                                .pUserDirectMemAddr)) +
+                         dwOffset));
 
         // Success
         return CRONO_SUCCESS;
@@ -415,10 +423,10 @@ uint32_t CRONO_KERNEL_ReadAddr16(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *val = *(
-            (volatile unsigned short
-                 *)(((unsigned char *)(pDevice->bar_addr.pUserDirectMemAddr)) +
-                    dwOffset));
+        *val = *((volatile unsigned short
+                      *)(((unsigned char *)(pDevice->bar_addr[0]
+                                                .pUserDirectMemAddr)) +
+                         dwOffset));
 
         // Success
         return CRONO_SUCCESS;
@@ -432,7 +440,7 @@ uint32_t CRONO_KERNEL_ReadAddr32(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         *val = *(
-            (volatile uint32_t *)(((unsigned char *)(pDevice->bar_addr
+            (volatile uint32_t *)(((unsigned char *)(pDevice->bar_addr[0]
                                                          .pUserDirectMemAddr)) +
                                   dwOffset));
 
@@ -449,7 +457,7 @@ uint32_t CRONO_KERNEL_ReadAddr64(CRONO_KERNEL_DEVICE_HANDLE hDev,
 
         // Copy memory
         *val = *(
-            (volatile uint64_t *)(((unsigned char *)(pDevice->bar_addr
+            (volatile uint64_t *)(((unsigned char *)(pDevice->bar_addr[0]
                                                          .pUserDirectMemAddr)) +
                                   dwOffset));
 
@@ -465,7 +473,7 @@ uint32_t CRONO_KERNEL_WriteAddr8(CRONO_KERNEL_DEVICE_HANDLE hDev,
 
         // Copy memory
         *((volatile unsigned char
-               *)(((unsigned char *)(pDevice->bar_addr.pUserDirectMemAddr)) +
+               *)(((unsigned char *)(pDevice->bar_addr[0].pUserDirectMemAddr)) +
                   dwOffset)) = val;
 
         // Success
@@ -480,7 +488,7 @@ uint32_t CRONO_KERNEL_WriteAddr16(CRONO_KERNEL_DEVICE_HANDLE hDev,
 
         // Copy memory
         *((volatile unsigned short
-               *)(((unsigned char *)(pDevice->bar_addr.pUserDirectMemAddr)) +
+               *)(((unsigned char *)(pDevice->bar_addr[0].pUserDirectMemAddr)) +
                   dwOffset)) = val;
 
         // Success
@@ -494,7 +502,7 @@ uint32_t CRONO_KERNEL_WriteAddr32(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *((volatile uint32_t *)(((unsigned char *)(pDevice->bar_addr
+        *((volatile uint32_t *)(((unsigned char *)(pDevice->bar_addr[0]
                                                        .pUserDirectMemAddr)) +
                                 dwOffset)) = val;
 
@@ -509,7 +517,7 @@ uint32_t CRONO_KERNEL_WriteAddr64(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *((volatile uint64_t *)(((unsigned char *)(pDevice->bar_addr
+        *((volatile uint64_t *)(((unsigned char *)(pDevice->bar_addr[0]
                                                        .pUserDirectMemAddr)) +
                                 dwOffset)) = val;
 
@@ -523,7 +531,7 @@ uint32_t CRONO_KERNEL_GetBarPointer(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_INIT_HDEV_FUNC(hDev);
         CRONO_RET_INV_PARAM_IF_NULL(barPointer);
 
-        barPointer = (uint32_t *)(pDevice->bar_addr.pUserDirectMemAddr);
+        barPointer = (uint32_t *)(pDevice->bar_addr[0].pUserDirectMemAddr);
 
         // Success
         return CRONO_SUCCESS;
@@ -737,8 +745,8 @@ CRONO_KERNEL_GetDeviceBARMem(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_RET_INV_PARAM_IF_NULL(pBARMemSize);
 
         // Copy values
-        *pBARUSAddr = pDevice->bar_addr.pUserDirectMemAddr;
-        *pBARMemSize = pDevice->bar_addr.dwSize;
+        *pBARUSAddr = pDevice->bar_addr[0].pUserDirectMemAddr;
+        *pBARMemSize = pDevice->bar_addr[0].dwSize;
 
         // Return result
         return ret;
@@ -935,16 +943,100 @@ uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         return CRONO_SUCCESS;
 }
 
-void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
+CRONO_KERNEL_API uint32_t CRONO_KERNEL_GetBarDescriptions(
+    CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t *barCount,
+    CRONO_KERNEL_BAR_DESC *barDescs) {
+
+        int ret = CRONO_SUCCESS;
+        int err;
+        char sys_dev_dir_path[PATH_MAX - 11]; // 11 for "/resourceN"
+        char BAR_file_path[PATH_MAX];
+
+        // ______________________________________
+        // Init variables and validate parameters
+        //
+        CRONO_INIT_HDEV_FUNC(hDev);
+        CRONO_RET_INV_PARAM_IF_NULL(barCount);
+        CRONO_RET_INV_PARAM_IF_NULL(barDescs);
+
+        CRONO_RET_INV_PARAM_IF_NULL(barCount);
+        err = crono_get_sys_devices_directory_path(
+            pDevice->pciSlot.dwDomain, pDevice->pciSlot.dwBus,
+            pDevice->pciSlot.dwSlot, pDevice->pciSlot.dwFunction,
+            sys_dev_dir_path);
+        if (CRONO_SUCCESS != err) {
+                printf("Path Error %d\n", err);
+                return err;
+        }
+        *barCount = 0;
+
+        // ___________________________________
+        // Get existing BARs, and fill structs
+        // 
+        for (int N = 0; N < 6; N++) {
+                struct stat st;
+                barDescs[N].barNum = N + 1;
+                barDescs[N].flags = 0; // Reserved
+
+                // Construct the BAR resource file path and check it
+                if (CRONO_SUCCESS !=
+                    (err = crono_get_BAR_file_path(sys_dev_dir_path, N,
+                                                   BAR_file_path))) {
+                        return err;
+                }
+                if (stat(BAR_file_path, &st) != 0) {
+                        // BAR resource doesn't exist,
+                        barDescs[N].userAddress = 0;
+                        barDescs[N].physicalAddress = 0;
+                        barDescs[N].length = 0;
+                        CRONO_DEBUG("BAR not supported: No. %d, %s, \n",
+                                    barDescs[N].barNum, BAR_file_path);
+                        continue;
+                }
+
+                // BAR N is found
+
+                // Fill memory size
+                err = crono_get_BAR_file_size(BAR_file_path,
+                                              (pciaddr_t *)&barDescs[N].length);
+                if (CRONO_SUCCESS != err) {
+                        printf("Error getting BAR memory length %d\n", err);
+                        return err;
+                }
+                CRONO_DEBUG("Found BAR No. %d, %s, \n", barDescs[N].barNum,
+                            BAR_file_path);
+
+                // Fill memory addresses
+                // Set corresponding bar_addr
+
+                // Increment valid BARs count
+                (*barCount)++;
+        }
+
+        // Success
+        return CRONO_SUCCESS;
+
+        return ret;
+}
+
+uint32_t freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
         int iDev;
         for (iDev = 0; iDev < iNewDev; iDev++) {
-                if (pDevice != devices[iDev]) 
-                    continue ;
-                if (pDevice->bar_addr.pUserDirectMemAddr) {
-                        if (munmap((void*)pDevice->bar_addr.pUserDirectMemAddr, pDevice->bar_addr.dwSize) == -1) 
-                        { 
-                                printf("Error %d: munmap\n", errno);
+                if (pDevice != devices[iDev])
+                        continue;
+                for (int N = 0; N < 6; N++) {
+                        if (!pDevice->bar_addr[N].pUserDirectMemAddr)
+                                continue;
+                        if (munmap(
+                                (void *)pDevice->bar_addr[N].pUserDirectMemAddr,
+                                pDevice->bar_addr[N].dwSize) == -1) {
+                                int err = errno;
+                                printf(
+                                    "Crono Error: munmap errno %d for BAR %d\n",
+                                    err, N);
+                                return err;
                         }
+                        pDevice->bar_addr[N].pUserDirectMemAddr = 0;
                 }
                 free(devices[iDev]);
                 devices[iDev] = nullptr; // avoid double free
@@ -954,6 +1046,7 @@ void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
                 // Last element in the array is empty, shrink it
                 iNewDev--;
         }
+        return CRONO_SUCCESS;
 }
 
 void freeDevicesMem() {

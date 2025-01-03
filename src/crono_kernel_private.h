@@ -40,7 +40,7 @@ typedef struct CRONO_KERNEL_DEVICE {
         uint32_t dwVendorId;
         uint32_t dwDeviceId;
 
-        CRONO_KERNEL_ADDR_DESC bar_addr; // BAR0 userspace mapped address
+        CRONO_KERNEL_ADDR_DESC bar_addr[6]; // BARs userspace mapped address
 
         /**
          * The name of the corresponding `miscdev` file, found under /dev

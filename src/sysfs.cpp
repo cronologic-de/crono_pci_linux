@@ -11,10 +11,10 @@ int crono_read_config(unsigned domain, unsigned bus, unsigned dev,
         int err = CRONO_SUCCESS;
         int fd;
         char *data_bytes = (char *)data;
-// Uncomment for detailed debug
-// #ifdef CRONO_DEBUG_ENABLED
-//         pciaddr_t byte_index;
-// #endif
+        // Uncomment for detailed debug
+        // #ifdef CRONO_DEBUG_ENABLED
+        //         pciaddr_t byte_index;
+        // #endif
         if (bytes_read != NULL) {
                 *bytes_read = 0;
         }
@@ -98,8 +98,9 @@ int crono_get_config_space_size(unsigned domain, unsigned bus, unsigned dev,
         CRONO_CONSTRUCT_CONFIG_FILE_PATH(config_file_path, domain, bus, dev,
                                          func);
         if (stat(config_file_path, &st) != 0) {
-                printf("Error %d: Error getting configuration file stat of %s.\n",
-                       errno, config_file_path);
+                printf(
+                    "Error %d: Error getting configuration file stat of %s.\n",
+                    errno, config_file_path);
                 return errno;
         }
         if (NULL != pSize) {
@@ -189,7 +190,7 @@ int crono_get_sys_devices_directory_path(unsigned domain, unsigned bus,
 
 int crono_get_BAR0_file_path(unsigned domain, unsigned bus, unsigned dev,
                              unsigned func, char *pPath) {
-        char sys_dev_dir_path[PATH_MAX - 11]; // 11 for "/resource0"
+        char sys_dev_dir_path[PATH_MAX - 11]; // 11 for "/resourceN"
         int err;
 
         // Init variables and validate parameters
@@ -202,13 +203,17 @@ int crono_get_BAR0_file_path(unsigned domain, unsigned bus, unsigned dev,
                 printf("Path Error %d\n", err);
                 return err;
         }
+        return crono_get_BAR_file_path(sys_dev_dir_path, 0, pPath);
+}
+
+int crono_get_BAR_file_path(char *sys_dev_dir_path, int N, char *pPath) {
 
         // Construct the BAR0 resource file path
         if (strlen(sys_dev_dir_path) > (PATH_MAX - 11)) {
                 // Not probable, but just for the logic
                 return -EINVAL;
         }
-        snprintf(pPath, PATH_MAX, "%s/resource0", sys_dev_dir_path);
+        snprintf(pPath, PATH_MAX, "%s/resource%d", sys_dev_dir_path, N);
 
         // Success
         return CRONO_SUCCESS;
@@ -216,20 +221,22 @@ int crono_get_BAR0_file_path(unsigned domain, unsigned bus, unsigned dev,
 
 int crono_get_BAR0_file_size(unsigned domain, unsigned bus, unsigned dev,
                              unsigned func, pciaddr_t *pSize) {
-        char BAR0_resource_path[PATH_MAX];
-        struct stat st;
+        char BAR0_file_path[PATH_MAX];
         int err;
 
         // Init variables and validate parameters
         CRONO_RET_INV_PARAM_IF_NULL(pSize);
-        if (CRONO_SUCCESS !=
-            (err = crono_get_BAR0_file_path(domain, bus, dev, func,
-                                            BAR0_resource_path))) {
+        if (CRONO_SUCCESS != (err = crono_get_BAR0_file_path(
+                                  domain, bus, dev, func, BAR0_file_path))) {
                 return err;
         }
+        return crono_get_BAR_file_size(BAR0_file_path, pSize);
+}
 
+int crono_get_BAR_file_size(char *BAR_file_path, pciaddr_t *pSize) {
+        struct stat st;
         // Get the resource file stat
-        if (stat(BAR0_resource_path, &st) != 0) {
+        if (stat(BAR_file_path, &st) != 0) {
                 printf("Error %d: Error getting BAR resource file stat.\n",
                        errno);
                 return errno;
@@ -242,7 +249,7 @@ int crono_get_BAR0_file_size(unsigned domain, unsigned bus, unsigned dev,
 int crono_get_BAR0_mem_addr(unsigned domain, unsigned bus, unsigned dev,
                             unsigned func, pciaddr_t dwOffset, pciaddr_t *size,
                             void **base_mem_addr, void **data_mem_addr) {
-        char BAR0_resource_path[PATH_MAX - 11]; // 11 for "/resource0"
+        char BAR0_file_path[PATH_MAX - 11]; // 11 for "/resource0"
         int err, fd = -1;
         pciaddr_t BAR0_full_mem_size;
 
@@ -251,9 +258,12 @@ int crono_get_BAR0_mem_addr(unsigned domain, unsigned bus, unsigned dev,
         *base_mem_addr = NULL;
 
         // Get size and open BAR0 resource sysfs file
-        if (CRONO_SUCCESS !=
-            (err = crono_get_BAR0_file_size(domain, bus, dev, func,
-                                            &BAR0_full_mem_size))) {
+        if (CRONO_SUCCESS != (err = crono_get_BAR0_file_path(
+                                  domain, bus, dev, func, BAR0_file_path))) {
+                return err;
+        }
+        if (CRONO_SUCCESS != (err = crono_get_BAR_file_size(
+                                  BAR0_file_path, &BAR0_full_mem_size))) {
                 return err;
         }
         if (dwOffset > BAR0_full_mem_size) {
@@ -265,20 +275,15 @@ int crono_get_BAR0_mem_addr(unsigned domain, unsigned bus, unsigned dev,
                 // printf("\n*size = %ld, BAR0_full_mem_size: %ld\n", *size,
                 // BAR0_full_mem_size) ;
         }
-        if (CRONO_SUCCESS !=
-            (err = crono_get_BAR0_file_path(domain, bus, dev, func,
-                                            BAR0_resource_path))) {
-                return err;
-        }
-        fd = open(BAR0_resource_path, O_RDWR | O_SYNC);
+        fd = open(BAR0_file_path, O_RDWR | O_SYNC);
         if (fd < 0) {
                 if (13 == errno) {
                         printf("Error %d: Cannot open resource0 <%s>, try "
                                "using sudo\n",
-                               errno, BAR0_resource_path);
+                               errno, BAR0_file_path);
                 } else {
                         printf("Error %d: Cannot open resource0 <%s>\n", errno,
-                               BAR0_resource_path);
+                               BAR0_file_path);
                 }
                 return errno;
         }
