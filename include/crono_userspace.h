@@ -16,10 +16,14 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fstream>
+#include <inttypes.h>
+#include <iostream>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -139,62 +143,6 @@ int crono_get_config_space_size(unsigned domain, unsigned bus, unsigned dev,
 int crono_get_sys_devices_directory_path(unsigned domain, unsigned bus,
                                          unsigned dev, unsigned func,
                                          char *pPath);
-
-/**
- * Gets the sysfs path of the BAR0 file, e.g.
- * /sys/devices/pci0000:00/0000:00:1c.7/0000:03:00.0/resource0
- * Calls `crono_get_BAR_file_path` with `N` = 0.
- *
- * @param domain[in]: The domain number of the device, 2 bytes value.
- * @param bus[in]: The bus number of the device, 1 byte value.
- * @param dev[in]: The device number of the device, 1 byte value.
- * @param func[in]: The function number of the device, 4-bits value.
- */
-int crono_get_BAR0_file_path(unsigned domain, unsigned bus, unsigned dev,
-                             unsigned func, char *pPath);
-/**
- * Gets the sysfs path of the BAR<N> file, e.g.
- * /sys/devices/pci0000:00/0000:00:1c.7/0000:03:00.0/resource0
- * for `N` = 0.
- *
- * @param sys_dev_dir_path[in]: got from `crono_get_sys_devices_directory_path`
- * @param N[in]: The resource number, only one digit, allowed values are (0, 1,
- * 2, 3, 4, 5)
- * @param pPath[out]: A valid pointer to the buffer that will contain the path.
- *  should be of size = [PATH_MAX]
- *
- * @return `CRONO_SUCCESS` in case of no error, or
- * `-EINVAL' in case of error.
- */
-int crono_get_BAR_file_path(char *sys_dev_dir_path, int N, char *pPath);
-
-/**
- * Gets the size of BAR0 resource file, e.g.
- * /sys/devices/pci0000:00/0000:00:1c.7/0000:03:00.0/resource0
- *
- * @param domain[in]: The domain number of the device, 2 bytes value.
- * @param bus[in]: The bus number of the device, 1 byte value.
- * @param dev[in]: The device number of the device, 1 byte value.
- * @param func[in]: The function number of the device, 4-bits value.
- * @param pSize[out]: A valid pointer to the buffer that will contain the size.
- *
- * @return `CRONO_SUCCESS` in case of no error, or
- * `-EINVAL` in case of error.
- */
-int crono_get_BAR0_file_size(unsigned domain, unsigned bus, unsigned dev,
-                             unsigned func, pciaddr_t *pSize);
-/**
- * Gets the size of BAR<N> resource file, e.g.
- * /sys/devices/pci0000:00/0000:00:1c.7/0000:03:00.0/resource0
- * for `N` = 0.
- *
- * @param BAR_file_path[in]: got from `crono_get_BAR_file_path` (/derivates)
- * @param pSize[out]: A valid pointer to the buffer that will contain the size.
- *
- * @return `CRONO_SUCCESS` in case of no error, or
- * `-EINVAL` in case of error.
- */
-int crono_get_BAR_file_size(char *BAR_file_path, pciaddr_t *pSize);
 
 /**
  * Memory is read-write pointer.
