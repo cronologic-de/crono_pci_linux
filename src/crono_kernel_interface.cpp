@@ -28,6 +28,8 @@
 
 PCRONO_KERNEL_DEVICE devices[8];
 int iNewDev = 0; // New device index in `devices`
+uint32_t getBarDesc(PCRONO_KERNEL_DEVICE pDevice, uint32_t barIndex,
+                    CRONO_KERNEL_BAR_DESC **barDesc);
 
 uint32_t
 CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
@@ -1128,6 +1130,21 @@ void freeDevicesMem() {
                 }
         }
         iNewDev = 0;
+}
+
+uint32_t getBarDesc(PCRONO_KERNEL_DEVICE pDevice, uint32_t barIndex,
+                    CRONO_KERNEL_BAR_DESC **barDesc) {
+        CRONO_RET_INV_PARAM_IF_NULL(pDevice);
+        CRONO_RET_INV_PARAM_IF_NULL(barDesc);
+        
+        for (int ibar = 0; ibar < 6; ibar++) {
+                if (pDevice->bar_descs[ibar].barNum == (ibar + 1)) {
+                        *barDesc = &pDevice->bar_descs[ibar];
+                        return CRONO_SUCCESS;
+                }
+        }
+        // barIndex is not found, return error: Invalid argument
+        return -EINVAL;
 }
 
 extern "C" __attribute__((destructor)) void onUnload() { freeDevicesMem(); }
