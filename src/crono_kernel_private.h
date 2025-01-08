@@ -26,21 +26,29 @@ extern "C" {
 
 typedef uint64_t DMA_ADDR;
 
-/* Address space information struct */
-typedef struct {
-        uint64_t
-            pUserDirectMemAddr; /* Memory address for direct user-mode access */
-        size_t dwSize;          // Added for Linux, to be used with munmap
-} CRONO_KERNEL_ADDR_DESC;
-
 /* Device information struct */
 typedef struct CRONO_KERNEL_DEVICE {
-        CRONO_KERNEL_PCI_SLOT
-        pciSlot; // PCI/PCMCIA device slot location information
+        /**
+         * PCI/PCMCIA device slot location information
+         */
+        CRONO_KERNEL_PCI_SLOT pciSlot;
+
         uint32_t dwVendorId;
         uint32_t dwDeviceId;
 
-        CRONO_KERNEL_ADDR_DESC bar_addr; // BAR0 userspace mapped address
+        /**
+         * BARs userspace mapped descriptions
+         * We just fill the bars that are present, with the corresponding
+         * barNum. If the first BAR is BAR5 then *barCount=1 and barDescs[0]
+         * will be filled with barNum=5.
+         */
+        CRONO_KERNEL_BAR_DESC bar_descs[6];
+
+        /**
+         * Count of valid elements in `bar_descs`, should be initialized with
+         * ZERO
+         */
+        uint32_t bar_count;
 
         /**
          * The name of the corresponding `miscdev` file, found under /dev
@@ -84,6 +92,21 @@ typedef struct CRONO_KERNEL_DEVICE {
         if (0 == (value_to_validate)) {                                        \
                 return -EINVAL;                                                \
         }
+
+uint32_t freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice);
+
+/**
+ * @brief Fill `pDevice->bar_descs` if not filled before, also mmap the BARs and
+ * set `pDevice->bar_count`. Returns immediately if previously done
+ * (pDevice->bar_count > 0). Prereuiqisites:
+ * - `pDevice->miscdev_fd` is valid for an opened file.
+ * - `pDevice->pciSlot` is filled.
+ *
+ * @param pDevice
+ * pDevice->pciSlot should be already set.
+ * @return uint32_t
+ */
+uint32_t fill_device_bar_descriptions(PCRONO_KERNEL_DEVICE pDevice);
 
 #ifdef __cplusplus
 }

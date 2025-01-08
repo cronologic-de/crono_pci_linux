@@ -11,10 +11,10 @@ int crono_read_config(unsigned domain, unsigned bus, unsigned dev,
         int err = CRONO_SUCCESS;
         int fd;
         char *data_bytes = (char *)data;
-// Uncomment for detailed debug
-// #ifdef CRONO_DEBUG_ENABLED
-//         pciaddr_t byte_index;
-// #endif
+        // Uncomment for detailed debug
+        // #ifdef CRONO_DEBUG_ENABLED
+        //         pciaddr_t byte_index;
+        // #endif
         if (bytes_read != NULL) {
                 *bytes_read = 0;
         }
@@ -98,8 +98,9 @@ int crono_get_config_space_size(unsigned domain, unsigned bus, unsigned dev,
         CRONO_CONSTRUCT_CONFIG_FILE_PATH(config_file_path, domain, bus, dev,
                                          func);
         if (stat(config_file_path, &st) != 0) {
-                printf("Error %d: Error getting configuration file stat of %s.\n",
-                       errno, config_file_path);
+                printf(
+                    "Error %d: Error getting configuration file stat of %s.\n",
+                    errno, config_file_path);
                 return errno;
         }
         if (NULL != pSize) {
@@ -185,149 +186,4 @@ int crono_get_sys_devices_directory_path(unsigned domain, unsigned bus,
         sprintf(pPath, "/sys/%s", &(dev_slink_content_path[9]));
 
         return CRONO_SUCCESS;
-}
-
-int crono_get_BAR0_file_path(unsigned domain, unsigned bus, unsigned dev,
-                             unsigned func, char *pPath) {
-        char sys_dev_dir_path[PATH_MAX - 11]; // 11 for "/resource0"
-        int err;
-
-        // Init variables and validate parameters
-        CRONO_RET_INV_PARAM_IF_NULL(pPath);
-
-        // Get the /sys/device directory path
-        err = crono_get_sys_devices_directory_path(domain, bus, dev, func,
-                                                   sys_dev_dir_path);
-        if (CRONO_SUCCESS != err) {
-                printf("Path Error %d\n", err);
-                return err;
-        }
-
-        // Construct the BAR0 resource file path
-        if (strlen(sys_dev_dir_path) > (PATH_MAX - 11)) {
-                // Not probable, but just for the logic
-                return -EINVAL;
-        }
-        snprintf(pPath, PATH_MAX, "%s/resource0", sys_dev_dir_path);
-
-        // Success
-        return CRONO_SUCCESS;
-}
-
-int crono_get_BAR0_file_size(unsigned domain, unsigned bus, unsigned dev,
-                             unsigned func, pciaddr_t *pSize) {
-        char BAR0_resource_path[PATH_MAX];
-        struct stat st;
-        int err;
-
-        // Init variables and validate parameters
-        CRONO_RET_INV_PARAM_IF_NULL(pSize);
-        if (CRONO_SUCCESS !=
-            (err = crono_get_BAR0_file_path(domain, bus, dev, func,
-                                            BAR0_resource_path))) {
-                return err;
-        }
-
-        // Get the resource file stat
-        if (stat(BAR0_resource_path, &st) != 0) {
-                printf("Error %d: Error getting BAR resource file stat.\n",
-                       errno);
-                return errno;
-        }
-        *pSize = st.st_size;
-
-        return CRONO_SUCCESS;
-}
-
-int crono_get_BAR0_mem_addr(unsigned domain, unsigned bus, unsigned dev,
-                            unsigned func, pciaddr_t dwOffset, pciaddr_t *size,
-                            void **base_mem_addr, void **data_mem_addr) {
-        char BAR0_resource_path[PATH_MAX - 11]; // 11 for "/resource0"
-        int err, fd = -1;
-        pciaddr_t BAR0_full_mem_size;
-
-        // Init variables and validate parameters
-        CRONO_RET_INV_PARAM_IF_NULL(base_mem_addr);
-        *base_mem_addr = NULL;
-
-        // Get size and open BAR0 resource sysfs file
-        if (CRONO_SUCCESS !=
-            (err = crono_get_BAR0_file_size(domain, bus, dev, func,
-                                            &BAR0_full_mem_size))) {
-                return err;
-        }
-        if (dwOffset > BAR0_full_mem_size) {
-                return ENOMEM;
-        }
-        if (0 == (*size)) {
-                // Get BAR0 full memory
-                *size = (pciaddr_t)BAR0_full_mem_size;
-                // printf("\n*size = %ld, BAR0_full_mem_size: %ld\n", *size,
-                // BAR0_full_mem_size) ;
-        }
-        if (CRONO_SUCCESS !=
-            (err = crono_get_BAR0_file_path(domain, bus, dev, func,
-                                            BAR0_resource_path))) {
-                return err;
-        }
-        fd = open(BAR0_resource_path, O_RDWR | O_SYNC);
-        if (fd < 0) {
-                if (13 == errno) {
-                        printf("Error %d: Cannot open resource0 <%s>, try "
-                               "using sudo\n",
-                               errno, BAR0_resource_path);
-                } else {
-                        printf("Error %d: Cannot open resource0 <%s>\n", errno,
-                               BAR0_resource_path);
-                }
-                return errno;
-        }
-
-        // Calculate offset
-        uint64_t offset_page_base_address, data_offset_from_page_base;
-        // mmap offset must be a multiple of the page size
-        // Get the offset of the requested page
-        offset_page_base_address = PAGE_SIZE * (dwOffset / PAGE_SIZE);
-        data_offset_from_page_base = dwOffset % PAGE_SIZE;
-
-        CRONO_DEBUG("\nmmap: size = %lu, offset: %lu\n",
-                    data_offset_from_page_base + (*size),
-                    offset_page_base_address);
-
-        // Mapping
-        *base_mem_addr = mmap(NULL, // Let kernel choose the (page-aligned)
-                                    // address at which to create the mapping
-                              data_offset_from_page_base + (*size),
-                              PROT_READ | PROT_WRITE, // Read & Write
-                              MAP_SHARED, fd, offset_page_base_address);
-        if (MAP_FAILED == (*base_mem_addr)) {
-                printf("Error %d: mmap\n", errno);
-                err = errno;
-                goto mmap_error;
-        }
-
-        // Set the parameters
-        // Set 'data_mem_addr'
-        if (NULL != data_mem_addr) {
-                // Set 'data_mem_addr' to the address of data memory @
-                // 'dwOffset' regardless of the `dwOffset` page-alignment.
-                *data_mem_addr = ((unsigned char *)(*base_mem_addr)) +
-                                 data_offset_from_page_base;
-        }
-        // Set size to the TOTAL size of the memory mapped.
-        *size = data_offset_from_page_base + (*size);
-
-        // Clean up
-        // After the mmap() call has returned, the file descriptor, fd, can
-        // be closed immediately without invalidating the mapping.
-        close(fd);
-
-        // Success
-        return CRONO_SUCCESS;
-
-mmap_error:
-        if (fd >= 0) {
-                close(fd);
-        }
-        return err;
 }

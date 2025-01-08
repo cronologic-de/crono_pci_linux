@@ -19,18 +19,17 @@
  * Validates that both `dwOffset` and `val` size are within the memory range.
  * Returns '-ENOMEM' if not.
  * Is part of the functions in this file, a prerequisite to have all used
-variables
- * defined and initialized in the functions.
-d*/
+ * variables defined and initialized in the functions. Applies only on BAR0
+ */
 #define CRONO_VALIDATE_MEM_RANGE                                               \
-        if ((dwOffset + sizeof(val)) > pDevice->bar_addr.dwSize) {             \
+        if ((dwOffset + sizeof(val)) > pDevice->bar_descs[0].length) {         \
                 return -ENOMEM;                                                \
         }
 
 PCRONO_KERNEL_DEVICE devices[8];
 int iNewDev = 0; // New device index in `devices`
-void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice);
-void freeDevicesMem();
+uint32_t getBarDesc(PCRONO_KERNEL_DEVICE pDevice, uint32_t barIndex,
+                    CRONO_KERNEL_BAR_DESC **barDesc);
 
 uint32_t
 CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
@@ -46,7 +45,7 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
         // while a device is already open for any reason.
 
         if (stat(SYS_BUS_PCIDEVS_PATH, &st) != 0) {
-                printf("Error %d: PCI FS is not found.\n", errno);
+                perror("Error: PCI FS is not found.");
                 return errno;
         }
         if (((st.st_mode) & S_IFMT) != S_IFDIR) {
@@ -55,7 +54,7 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
         }
         dr = opendir(SYS_BUS_PCIDEVS_PATH); // open all or present directory
         if (!dr) {
-                printf("Error %d: opening PCI directory.\n", errno);
+                perror("Error: Can't open PCI directory.");
                 return errno;
         }
         while ((en = readdir(dr)) != NULL) {
@@ -132,7 +131,7 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
 
         dr = opendir(SYS_BUS_PCIDEVS_PATH); // open all or present directory
         if (!dr) {
-                printf("Error %d: opening PCI directory.\n", errno);
+                perror("Error: opening PCI directory");
                 return errno;
         }
         while ((en = readdir(dr)) != NULL) {
@@ -155,6 +154,8 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                             sizeof(CRONO_KERNEL_DEVICE));
                         // Save value if a later cleanup is needed
                         devices[iNewDev++] = pDevice;
+
+                        // Initialize struct elements to zeros
                         memset(pDevice, 0, sizeof(CRONO_KERNEL_DEVICE));
 
                         // Set `pDevice` slot information
@@ -178,24 +179,6 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         pDevice->dwDeviceId = device_id;
                         pDevice->dwVendorId = vendor_id;
 
-                        // Set bar_addr
-                        // Map BAR0 full memory starting @ offset 0 to bar_addr
-                        void *BAR_base_mem_address;
-                        pciaddr_t dwSize = 0;
-                        ret = crono_get_BAR0_mem_addr(
-                            domain, bus, dev, func, 0, &dwSize,
-                            &BAR_base_mem_address, NULL);
-                        if (CRONO_SUCCESS != ret) {
-                                printf(
-                                    "Error getting BAR0 memory address <%d>\n",
-                                    ret);
-                                ret = CRONO_KERNEL_TRY_AGAIN;
-                                goto device_error;
-                        }
-                        pDevice->bar_addr.pUserDirectMemAddr =
-                            (size_t)BAR_base_mem_address;
-                        pDevice->bar_addr.dwSize = dwSize;
-
                         // Get the device `miscdev` file name, and set it to
                         // `pDevice`
                         struct crono_dev_DBDF dbdf = {domain, bus, dev, func};
@@ -205,45 +188,58 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                         char miscdev_path[PATH_MAX];
                         sprintf(miscdev_path, "/dev/%s", pDevice->miscdev_name);
                         if (stat(miscdev_path, &miscdev_stat) != 0) {
-                                printf("Error: miscdev `%s` is not found.\n",
-                                       miscdev_path);
+                                printf("Error: miscdev `%s` is not found. <%d> "
+                                       "<%s>\n",
+                                       miscdev_path, errno, strerror(errno));
                                 ret = -EINVAL;
                                 goto device_error;
                         }
 
                         // Open the miscellanous driver file
                         int miscdev_fd = open(miscdev_path, O_RDWR);
-                        if (miscdev_fd > 0) {
-                                // Success
-                                pDevice->miscdev_fd = miscdev_fd;
-                                CRONO_DEBUG("Device <%s> is opened as <%d>.\n",
-                                            pDevice->miscdev_name,
-                                            pDevice->miscdev_fd);
-                                // Set phDev
-                                *phDev = pDevice;
-                                break;
+                        if (miscdev_fd <= 0) {
+                                // Error opening the device
+                                switch (errno) {
+                                case EBUSY:
+                                        // Mostly returned by the OS
+                                        printf("Device of file descriptor <%d> "
+                                               "is busy\n",
+                                               pDevice->miscdev_fd);
+                                        ret = CRONO_KERNEL_TRY_AGAIN;
+                                        goto device_error;
+                                case ENODEV:
+                                        printf("No device found\n");
+                                        ret = CRONO_KERNEL_NO_DEVICE_OBJECT;
+                                        goto device_error;
+                                default:
+                                        printf("Error: cannot open device file "
+                                               "<%s>. <%d> <%s>\n",
+                                               miscdev_path, errno,
+                                               strerror(errno));
+                                        ret =
+                                            CRONO_KERNEL_INSUFFICIENT_RESOURCES;
+                                        goto device_error;
+                                }
                         }
-                        // Error opening the device
-                        switch (errno) {
-                        case EBUSY:
-                                // Mostly returned by the OS
-                                printf(
-                                    "Device of file descriptor <%d> is busy\n",
-                                    pDevice->miscdev_fd);
-                                ret = CRONO_KERNEL_TRY_AGAIN;
-                                goto device_error;
-                        case ENODEV:
-                                printf("No device found\n");
-                                ret = CRONO_KERNEL_NO_DEVICE_OBJECT;
-                                goto device_error;
-                        default:
-                                printf("Error %d: cannot open device file "
-                                       "<%s>...\n",
-                                       errno, miscdev_path);
-                                ret = CRONO_KERNEL_INSUFFICIENT_RESOURCES;
+
+                        // Success
+                        pDevice->miscdev_fd = miscdev_fd;
+                        CRONO_DEBUG("Device <%s> is opened as <%d>.\n",
+                                    pDevice->miscdev_name, pDevice->miscdev_fd);
+                        // Set phDev
+                        *phDev = pDevice;
+
+                        // Successfully opened
+
+                        // Set bar descriptions
+                        ret = fill_device_bar_descriptions(pDevice);
+                        if (ret != CRONO_SUCCESS) {
+                                close(miscdev_fd);
                                 goto device_error;
                         }
-                        break;
+
+                        break; // Device is found and set, no further search is
+                               // needed
                 }
         }
 
@@ -267,23 +263,27 @@ device_error:
 
 uint32_t CRONO_KERNEL_PciDeviceClose(CRONO_KERNEL_DEVICE_HANDLE hDev) {
         // Init variables and validate parameters
+        int ret = CRONO_SUCCESS;
         CRONO_INIT_HDEV_FUNC(hDev);
 
         // Close the device
         if (-1 == close(pDevice->miscdev_fd)) {
                 // Error
-                printf("Error %d: cannot close device file descriptor "
-                       "<%d>...\n",
-                       errno, pDevice->miscdev_fd);
+                printf("Error: cannot close device file descriptor "
+                       "<%d>: <%d> <%s> \n",
+                       pDevice->miscdev_fd, errno, strerror(errno));
                 return errno;
         }
         CRONO_DEBUG("Device <%s> is closed as <%d>.\n", pDevice->miscdev_name,
                     pDevice->miscdev_fd);
 
         // Free memory allocated in CRONO_KERNEL_PciDeviceOpen
-        freeDeviceMem(pDevice);
+        ret = freeDeviceMem(pDevice);
+        if (CRONO_SUCCESS != ret) {
+                return ret;
+        }
 
-        return CRONO_SUCCESS;
+        return ret;
 }
 
 /* -----------------------------------------------
@@ -398,10 +398,10 @@ uint32_t CRONO_KERNEL_ReadAddr8(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *val = *(
-            (volatile unsigned char
-                 *)(((unsigned char *)(pDevice->bar_addr.pUserDirectMemAddr)) +
-                    dwOffset));
+        *val =
+            *((volatile unsigned char
+                   *)(((unsigned char *)(pDevice->bar_descs[0].userAddress)) +
+                      dwOffset));
 
         // Success
         return CRONO_SUCCESS;
@@ -415,10 +415,10 @@ uint32_t CRONO_KERNEL_ReadAddr16(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *val = *(
-            (volatile unsigned short
-                 *)(((unsigned char *)(pDevice->bar_addr.pUserDirectMemAddr)) +
-                    dwOffset));
+        *val =
+            *((volatile unsigned short
+                   *)(((unsigned char *)(pDevice->bar_descs[0].userAddress)) +
+                      dwOffset));
 
         // Success
         return CRONO_SUCCESS;
@@ -431,10 +431,9 @@ uint32_t CRONO_KERNEL_ReadAddr32(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_RET_ERR_CODE_IF_NULL(val, -ENOMEM);
         CRONO_VALIDATE_MEM_RANGE;
 
-        *val = *(
-            (volatile uint32_t *)(((unsigned char *)(pDevice->bar_addr
-                                                         .pUserDirectMemAddr)) +
-                                  dwOffset));
+        *val = *((volatile uint32_t *)(((unsigned char *)(pDevice->bar_descs[0]
+                                                              .userAddress)) +
+                                       dwOffset));
 
         // Success
         return CRONO_SUCCESS;
@@ -448,10 +447,9 @@ uint32_t CRONO_KERNEL_ReadAddr64(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *val = *(
-            (volatile uint64_t *)(((unsigned char *)(pDevice->bar_addr
-                                                         .pUserDirectMemAddr)) +
-                                  dwOffset));
+        *val = *((volatile uint64_t *)(((unsigned char *)(pDevice->bar_descs[0]
+                                                              .userAddress)) +
+                                       dwOffset));
 
         // Success
         return CRONO_SUCCESS;
@@ -464,9 +462,9 @@ uint32_t CRONO_KERNEL_WriteAddr8(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *((volatile unsigned char
-               *)(((unsigned char *)(pDevice->bar_addr.pUserDirectMemAddr)) +
-                  dwOffset)) = val;
+        *((volatile unsigned char *)(((unsigned char *)(pDevice->bar_descs[0]
+                                                            .userAddress)) +
+                                     dwOffset)) = val;
 
         // Success
         return CRONO_SUCCESS;
@@ -479,9 +477,9 @@ uint32_t CRONO_KERNEL_WriteAddr16(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *((volatile unsigned short
-               *)(((unsigned char *)(pDevice->bar_addr.pUserDirectMemAddr)) +
-                  dwOffset)) = val;
+        *((volatile unsigned short *)(((unsigned char *)(pDevice->bar_descs[0]
+                                                             .userAddress)) +
+                                      dwOffset)) = val;
 
         // Success
         return CRONO_SUCCESS;
@@ -494,8 +492,8 @@ uint32_t CRONO_KERNEL_WriteAddr32(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *((volatile uint32_t *)(((unsigned char *)(pDevice->bar_addr
-                                                       .pUserDirectMemAddr)) +
+        *((volatile uint32_t *)(((unsigned char *)(pDevice->bar_descs[0]
+                                                       .userAddress)) +
                                 dwOffset)) = val;
 
         // Success
@@ -509,8 +507,8 @@ uint32_t CRONO_KERNEL_WriteAddr64(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_VALIDATE_MEM_RANGE;
 
         // Copy memory
-        *((volatile uint64_t *)(((unsigned char *)(pDevice->bar_addr
-                                                       .pUserDirectMemAddr)) +
+        *((volatile uint64_t *)(((unsigned char *)(pDevice->bar_descs[0]
+                                                       .userAddress)) +
                                 dwOffset)) = val;
 
         // Success
@@ -523,7 +521,7 @@ uint32_t CRONO_KERNEL_GetBarPointer(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_INIT_HDEV_FUNC(hDev);
         CRONO_RET_INV_PARAM_IF_NULL(barPointer);
 
-        barPointer = (uint32_t *)(pDevice->bar_addr.pUserDirectMemAddr);
+        barPointer = (uint32_t *)(pDevice->bar_descs[0].userAddress);
 
         // Success
         return CRONO_SUCCESS;
@@ -737,8 +735,8 @@ CRONO_KERNEL_GetDeviceBARMem(CRONO_KERNEL_DEVICE_HANDLE hDev,
         CRONO_RET_INV_PARAM_IF_NULL(pBARMemSize);
 
         // Copy values
-        *pBARUSAddr = pDevice->bar_addr.pUserDirectMemAddr;
-        *pBARMemSize = pDevice->bar_addr.dwSize;
+        *pBARUSAddr = pDevice->bar_descs[0].userAddress;
+        *pBARMemSize = pDevice->bar_descs[0].length;
 
         // Return result
         return ret;
@@ -860,7 +858,7 @@ uint32_t CRONO_KERNEL_DMAContigBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev,
             (CRONO_KERNEL_DMA_CONTIG *)malloc(sizeof(CRONO_KERNEL_DMA_CONTIG));
         if (NULL == pDma) {
                 // $$ CRONO_KERNEL_DMAContigBufUnlock
-                printf("Error allocating DMA struct memory");
+                perror("Error allocating DMA struct memory");
                 return -ENOMEM;
         }
         memset(pDma, 0, sizeof(CRONO_KERNEL_DMA_CONTIG));
@@ -935,17 +933,183 @@ uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         return CRONO_SUCCESS;
 }
 
-void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
+CRONO_KERNEL_API uint32_t CRONO_KERNEL_GetBarDescriptions(
+    CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t *barCount,
+    CRONO_KERNEL_BAR_DESC *barDescs) {
+
+        int ret = CRONO_SUCCESS;
+        CRONO_INIT_HDEV_FUNC(hDev);
+        CRONO_RET_INV_PARAM_IF_NULL(barCount);
+        CRONO_RET_INV_PARAM_IF_NULL(barDescs);
+
+        ret = fill_device_bar_descriptions(pDevice);
+        if (ret != CRONO_SUCCESS)
+                return ret;
+
+        // Already got before, use it
+        memcpy(barDescs, pDevice->bar_descs, sizeof(CRONO_KERNEL_BAR_DESC) * 6);
+        *barCount = pDevice->bar_count;
+        return CRONO_SUCCESS;
+}
+
+uint32_t fill_device_bar_descriptions(PCRONO_KERNEL_DEVICE pDevice) {
+
+        int ret = CRONO_SUCCESS;
+        char sys_dev_dir_path[PATH_MAX - 11]; // 11 for "/resourceN"
+        uint32_t bar_count = 0;
+        CRONO_KERNEL_BAR_DESC temp_bar_descs[6];
+
+        // ______________________________________
+        // Init variables and validate parameters
+        //
+        CRONO_RET_INV_PARAM_IF_NULL(pDevice);
+        memset(temp_bar_descs, 0, sizeof(CRONO_KERNEL_BAR_DESC) * 6);
+
+        // ________________________________________
+        // Return if descripions are previously set
+        //
+        if (pDevice->bar_count > 0) {
+                // Assuming `bar_count` is initialized with zero
+                return CRONO_SUCCESS;
+        }
+
+        // ___________________________________
+        // Get existing BARs, and fill structs
+        //
+        ret = crono_get_sys_devices_directory_path(
+            pDevice->pciSlot.dwDomain, pDevice->pciSlot.dwBus,
+            pDevice->pciSlot.dwSlot, pDevice->pciSlot.dwFunction,
+            sys_dev_dir_path);
+        if (CRONO_SUCCESS != ret) {
+                printf("Device path error <%d>\n", ret);
+                return ret;
+        }
+
+        // Open the `resource` file to get memory addresses and flags from
+        std::string resource_file_path =
+            std::string(sys_dev_dir_path) + "/resource";
+        CRONO_DEBUG("Getting bar descriptions for resource file <%s>\n",
+                    resource_file_path.c_str());
+        int resource_fd = open(resource_file_path.c_str(), O_RDONLY | O_SYNC);
+        if (resource_fd < 0) {
+                printf("Error opening resource file <%s>: <%d> <%s>\n",
+                       resource_file_path.c_str(), errno, strerror(errno));
+                return errno;
+        }
+        std::ifstream resource_file(resource_file_path);
+        if (!resource_file.is_open()) {
+                printf("Error streaming resource file <%s>: <%d> <%s>\n",
+                       resource_file_path.c_str(), errno, strerror(errno));
+                close(resource_fd);
+                return -EINVAL;
+        }
+
+        // Fill `temp_bar_descs` with the 6 BARs info, then copy it to
+        // `pDevice`.
+        for (int ibar = 0; ibar < 6; ibar++) {
+                // Read a line in resource file related to `ibar`, even if
+                // it's not supported, this is in order to sync the file cursor
+                // with the current ibar Command: `cat
+                // /sys/bus/pci/devices/0000:03:00.0/resource`
+                unsigned long long start_addr, end_addr, flags;
+                resource_file >> std::hex >> start_addr >> end_addr >> flags;
+
+                // Construct the BAR resource file path and check it
+                if (start_addr == 0 && end_addr == 0) {
+                        // BAR resource doesn't exist,
+                        CRONO_DEBUG("BAR not supported: Index: <%d>, Resource "
+                                    "File: <%s>, \n",
+                                    ibar, resource_file_path.c_str());
+                        continue; // Check next BAR if valid
+                }
+
+                // A new BAR is found, fill a new element for it in
+                // `temp_bar_descs`
+                temp_bar_descs[bar_count].barNum = ibar + 1;
+                CRONO_DEBUG("Found BAR No. %d, %s, \n",
+                            temp_bar_descs[bar_count].barNum,
+                            resource_file_path.c_str());
+
+                // Set `length` (memory size)
+                // Another way: `st.st_size` of `resourceN`
+                temp_bar_descs[bar_count].length = end_addr - start_addr + 1;
+                temp_bar_descs[bar_count].physicalAddress = start_addr;
+
+                // Open BAR resource file to map the memory
+                std::string bar_resource_file_path =
+                    std::string(sys_dev_dir_path) + "/resource" +
+                    std::to_string(ibar);
+                CRONO_DEBUG("Getting bar descriptions for resource file <%s>\n",
+                            bar_resource_file_path.c_str());
+                int bar_resource_fd =
+                    open(bar_resource_file_path.c_str(), O_RDWR | O_SYNC);
+                if (bar_resource_fd < 0) {
+                        printf("Error opening resource file <%s>: <%d> <%s>\n",
+                               bar_resource_file_path.c_str(), errno,
+                               strerror(errno));
+
+                        // Clean up and return error
+                        resource_file.close();
+                        close(resource_fd);
+                        return errno;
+                }
+
+                // mmap to get user address
+                void *user_addr = mmap(NULL, temp_bar_descs[bar_count].length,
+                                       PROT_READ | PROT_WRITE, MAP_SHARED,
+                                       bar_resource_fd, 0);
+                if (user_addr == MAP_FAILED) {
+                        printf("Failed to map BAR memory <%s> to user space: "
+                               "<%d> <%s>\n",
+                               bar_resource_file_path.c_str(), errno,
+                               strerror(errno));
+
+                        // Clean up and return error
+                        close(bar_resource_fd);
+                        resource_file.close();
+                        close(resource_fd);
+                        return errno;
+                }
+                temp_bar_descs[bar_count].userAddress = (uint64_t)user_addr;
+                close(bar_resource_fd);
+
+                // Increment valid BARs count in array
+                bar_count++;
+        }
+
+        // _____________________________
+        // Success, cleanup and finalize
+        //
+        resource_file.close();
+        close(resource_fd);
+
+        // Copy full memory (6 elements) including the empty ones for non-found
+        // BARs, so `pDevice->bar_descs` is "fully" set.
+        memcpy(pDevice->bar_descs, temp_bar_descs,
+               sizeof(CRONO_KERNEL_BAR_DESC) * 6);
+        pDevice->bar_count = bar_count;
+        return CRONO_SUCCESS;
+}
+
+uint32_t freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
         int iDev;
         for (iDev = 0; iDev < iNewDev; iDev++) {
-                if (pDevice != devices[iDev]) 
-                    continue ;
-                if (pDevice->bar_addr.pUserDirectMemAddr) {
-                        if (munmap((void*)pDevice->bar_addr.pUserDirectMemAddr, pDevice->bar_addr.dwSize) == -1) 
-                        { 
-                                printf("Error %d: munmap\n", errno);
+                if (pDevice != devices[iDev])
+                        continue;
+                for (uint32_t ibar = 0; ibar < pDevice->bar_count; ibar++) {
+                        if (!pDevice->bar_descs[ibar].userAddress)
+                                continue;
+                        if (munmap((void *)pDevice->bar_descs[ibar].userAddress,
+                                   pDevice->bar_descs[ibar].length) == -1) {
+                                int err = errno;
+                                printf("Crono Error: munmap for ibar <%d>. "
+                                       "<%d> <%s>\n",
+                                       ibar, errno, strerror(errno));
+                                return err;
                         }
+                        pDevice->bar_descs[ibar].userAddress = 0;
                 }
+                pDevice->bar_count = 0;
                 free(devices[iDev]);
                 devices[iDev] = nullptr; // avoid double free
         }
@@ -954,16 +1118,33 @@ void freeDeviceMem(PCRONO_KERNEL_DEVICE pDevice) {
                 // Last element in the array is empty, shrink it
                 iNewDev--;
         }
+        return CRONO_SUCCESS;
 }
 
 void freeDevicesMem() {
         for (int iDev = 0; iDev < iNewDev; iDev++) {
                 if (devices[iDev]) {
+                        // $$ unmmap device mem
                         free(devices[iDev]);
                         devices[iDev] = nullptr; // reset
                 }
         }
         iNewDev = 0;
+}
+
+uint32_t getBarDesc(PCRONO_KERNEL_DEVICE pDevice, uint32_t barIndex,
+                    CRONO_KERNEL_BAR_DESC **barDesc) {
+        CRONO_RET_INV_PARAM_IF_NULL(pDevice);
+        CRONO_RET_INV_PARAM_IF_NULL(barDesc);
+        
+        for (int ibar = 0; ibar < 6; ibar++) {
+                if (pDevice->bar_descs[ibar].barNum == (ibar + 1)) {
+                        *barDesc = &pDevice->bar_descs[ibar];
+                        return CRONO_SUCCESS;
+                }
+        }
+        // barIndex is not found, return error: Invalid argument
+        return -EINVAL;
 }
 
 extern "C" __attribute__((destructor)) void onUnload() { freeDevicesMem(); }

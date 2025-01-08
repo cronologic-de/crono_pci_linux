@@ -302,7 +302,7 @@ CRONO_KERNEL_CardCleanupSetup(CRONO_KERNEL_DEVICE_HANDLE hDev,
     Read/Write memory and I/O addresses
    ----------------------------------------------- */
 
-/* Read/write a device's address space (8/16/32/64 bits) */
+/* Read/write a device's address space (8/16/32/64 bits) of BAR0*/
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_ReadAddr8(
     CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset, uint8_t *val);
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_ReadAddr16(
@@ -373,16 +373,30 @@ typedef union {
         CRONO_KERNEL_PCI_ID pciId;
 } CRONO_KERNEL_ID_U;
 
-/*************************************************************
-  General utility macros
- *************************************************************/
-/* -----------------------------------------------
-    Memory / I/O / Registers
-   ----------------------------------------------- */
-/* NOTE: pAddrDesc param should be of type CRONO_KERNEL_ADDR_DESC* */
+#define CRONO_KERNEL_BAR_FLAG_32_BIT
 
-/* Check if memory or I/O address */
-#define CRONO_KERNEL_ADDR_IS_MEM(pAddrDesc) (pAddrDesc)->fIsMemory
+typedef struct {
+        uint32_t barNum; // number of the BAR (BAR0-5) not the index
+        uint32_t flags;
+        uint64_t userAddress;
+        uint64_t physicalAddress;
+        uint32_t length;
+} CRONO_KERNEL_BAR_DESC;
+
+/**
+ * @brief Get device BAR Memory information for all present BARs (upto 6).
+ * Memory addresses will not be valid after device is closed.
+ *
+ * @param hDev[in]: A valid handle to the device.
+ * @param barCount[out]: Number of BarDesc objects filled
+ * @param barDescs[in/out]: Must point to an array of 6 CRONO_KERNEL_BAR_DESC
+ * structure objects.
+ *
+ * @return CRONO_SUCCESS in case of no error, or errno in case of error.
+ */
+CRONO_KERNEL_API uint32_t CRONO_KERNEL_GetBarDescriptions(
+    CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t *barCount,
+    CRONO_KERNEL_BAR_DESC *barDescs);
 
 #ifdef __linux__
 /**
