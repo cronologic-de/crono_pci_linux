@@ -70,9 +70,8 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
                 int ret = crono_read_vendor_device(domain, bus, dev, func,
                                                    &vendor_id, &device_id);
                 if (CRONO_SUCCESS != ret) {
-                        CRONO_DEBUG("Error <%d> finding devices\n", ret);
-                        closedir(dr);
-                        return ret;
+		  CRONO_DEBUG("Warning could not read vendor for %s\n", dr);
+		  continue;
                 }
 
                 // Check values & fill pPciScanResult if device matches the
