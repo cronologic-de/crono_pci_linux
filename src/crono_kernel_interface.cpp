@@ -61,7 +61,7 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
                 if (en->d_type != DT_LNK) {
                         continue;
                 }
-
+		printf("scanning %s.\n", dr);
                 // Get PCI Domain, Bus, Device, and Function
                 sscanf(en->d_name, "%04x:%02x:%02x.%1u", &domain, &bus, &dev,
                        &func);
