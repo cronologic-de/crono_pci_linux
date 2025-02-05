@@ -28,8 +28,6 @@
 
 PCRONO_KERNEL_DEVICE devices[8];
 int iNewDev = 0; // New device index in `devices`
-uint32_t getBarDesc(PCRONO_KERNEL_DEVICE pDevice, uint32_t barIndex,
-                    CRONO_KERNEL_BAR_DESC **barDesc);
 
 uint32_t
 CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
@@ -1024,7 +1022,7 @@ uint32_t fill_device_bar_descriptions(PCRONO_KERNEL_DEVICE pDevice) {
 
                 // A new BAR is found, fill a new element for it in
                 // `temp_bar_descs`
-                temp_bar_descs[bar_count].barNum = ibar + 1;
+                temp_bar_descs[bar_count].barNum = ibar;
                 CRONO_DEBUG("Found BAR No. %d, %s, \n",
                             temp_bar_descs[bar_count].barNum,
                             resource_file_path.c_str());
@@ -1129,21 +1127,6 @@ void freeDevicesMem() {
                 }
         }
         iNewDev = 0;
-}
-
-uint32_t getBarDesc(PCRONO_KERNEL_DEVICE pDevice, uint32_t barIndex,
-                    CRONO_KERNEL_BAR_DESC **barDesc) {
-        CRONO_RET_INV_PARAM_IF_NULL(pDevice);
-        CRONO_RET_INV_PARAM_IF_NULL(barDesc);
-        
-        for (int ibar = 0; ibar < 6; ibar++) {
-                if (pDevice->bar_descs[ibar].barNum == (ibar + 1)) {
-                        *barDesc = &pDevice->bar_descs[ibar];
-                        return CRONO_SUCCESS;
-                }
-        }
-        // barIndex is not found, return error: Invalid argument
-        return -EINVAL;
 }
 
 extern "C" __attribute__((destructor)) void onUnload() { freeDevicesMem(); }
