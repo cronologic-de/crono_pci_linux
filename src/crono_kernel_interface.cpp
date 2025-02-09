@@ -59,17 +59,38 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
                 if (en->d_type != DT_LNK) {
                         continue;
                 }
-		printf("scanning %s.\n", dr);
+
                 // Get PCI Domain, Bus, Device, and Function
-                sscanf(en->d_name, "%04x:%02x:%02x.%1u", &domain, &bus, &dev,
-                       &func);
+                const char *colon_pos = strchr(en->d_name, ':');
+                if (colon_pos == NULL) {
+                        CRONO_DEBUG("Warning could not read vendor for %s\n",
+                                    en->d_name);
+                }
+                size_t domain_length = colon_pos - en->d_name;
+                if (domain_length == 4) {
+                        sscanf(en->d_name, "%04x:%02x:%02x.%1u", &domain, &bus,
+                               &dev, &func);
+                        CRONO_DEBUG("Read 4-digits domain dir name "
+                                    "<%s> into %d, %d, %d, %d\n",
+                                    en->d_name, domain, bus, dev, func);
+                } else if (domain_length == 5) {
+                        sscanf(en->d_name, "%05x:%02x:%02x.%1u", &domain, &bus,
+                               &dev, &func);
+                        CRONO_DEBUG("Read 5-digits domain dir name "
+                                    "<%s> into %d, %d, %d, %d\n",
+                                    en->d_name, domain, bus, dev, func);
+                } else {
+                        perror("Error: Unsupported domain length.");
+                        continue;
+                }
 
                 // Get Vendor ID and Device ID
                 int ret = crono_read_vendor_device(domain, bus, dev, func,
                                                    &vendor_id, &device_id);
                 if (CRONO_SUCCESS != ret) {
-		  CRONO_DEBUG("Warning could not read vendor for %s\n", dr);
-		  continue;
+                        CRONO_DEBUG("Warning could not read vendor for %s\n",
+                                    en->d_name);
+                        continue;
                 }
 
                 // Check values & fill pPciScanResult if device matches the
@@ -137,8 +158,29 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                 }
 
                 // Get PCI Domain, Bus, Device, and Function
-                sscanf(en->d_name, "%04x:%02x:%02x.%1u", &domain, &bus, &dev,
-                       &func);
+                const char *colon_pos = strchr(en->d_name, ':');
+                if (colon_pos == NULL) {
+                        CRONO_DEBUG("Warning could not read vendor for %s\n",
+                                    en->d_name);
+                        continue;
+                }
+                size_t domain_length = colon_pos - en->d_name;
+                if (domain_length == 4) {
+                        sscanf(en->d_name, "%04x:%02x:%02x.%1u", &domain, &bus,
+                               &dev, &func);
+                        CRONO_DEBUG("Read 4-digits domain dir name "
+                                    "<%s> into %d, %d, %d, %d\n",
+                                    en->d_name, domain, bus, dev, func);
+                } else if (domain_length == 5) {
+                        sscanf(en->d_name, "%05x:%02x:%02x.%1u", &domain, &bus,
+                               &dev, &func);
+                        CRONO_DEBUG("Read 5-digits domain dir name "
+                                    "<%s> into %d, %d, %d, %d\n",
+                                    en->d_name, domain, bus, dev, func);
+                } else {
+                        perror("Error: Unsupported domain length.");
+                        continue;
+                }
 
                 // Check values & fill pDevice if device matches the
                 // Vendor/Device
@@ -577,7 +619,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
                 return -ENOMEM;
         }
         memset(pDma, 0, sizeof(CRONO_KERNEL_DMA_SG));
-#define DIV_ROUND_UP(n, d) (((n) + (d)-1) / (d))
+#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
         buff_info.pages_count = pDma->dwPages =
             DIV_ROUND_UP(dwDMABufSize, PAGE_SIZE);
         pDma->pUserAddr = pBuf;
@@ -924,9 +966,12 @@ uint32_t CRONO_KERNEL_DMAContigBufUnlock(CRONO_KERNEL_DEVICE_HANDLE hDev,
         if (munmap(pDma->pUserAddr, pDma->dwBytes) < 0) {
                 printf("Failed to unmap memory\n");
         }
+#ifdef CRONO_DEBUG_ENABLED
+        int buff_id = pDma->id; // Keep it for debugging if needed
+#endif
         free(pDma);
 
-        CRONO_DEBUG("Done unlocking buffer id <%d>.\n", pDma->id);
+        CRONO_DEBUG("Done unlocking buffer id <%d>.\n", buff_id);
         return CRONO_SUCCESS;
 }
 

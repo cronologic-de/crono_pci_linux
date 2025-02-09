@@ -23,6 +23,8 @@ int crono_read_config(unsigned domain, unsigned bus, unsigned dev,
                                          func);
         fd = open(config_file_path, O_RDONLY | O_CLOEXEC);
         if (fd == -1) {
+                CRONO_DEBUG("Error reading configuration of file <%s>\n",
+                            config_file_path);
                 return errno;
         }
 
@@ -177,6 +179,8 @@ int crono_get_sys_devices_directory_path(unsigned domain, unsigned bus,
         dev_slink_content_len =
             readlink(dev_slink_path, dev_slink_content_path, PATH_MAX - 16);
         if (-1 == dev_slink_content_len) {
+                CRONO_DEBUG("Error reading link <%s> for %d, %d, %d, %d\n",
+                            dev_slink_path, domain, bus, dev, func);
                 return errno;
         }
         // e.g. ../../../devices/pci0000:00/0000:00:1c.7/0000:03:00.0
