@@ -42,7 +42,7 @@
                                          func)                                 \
         snprintf(config_file_path, PATH_MAX,                                   \
                  domain <= 0xFFFF ? "%s/%04x:%02x:%02x.%1u/config"             \
-                                  : "%s/%05x:%02x:%02x.%1u/config",            \
+                                  : "%s/%x:%02x:%02x.%1u/config",              \
                  SYS_BUS_PCIDEVS_PATH, domain, bus, dev, func);
 
 /**
@@ -53,7 +53,7 @@
 #define CRONO_CONSTRUCT_DEV_SLINK_PATH(dev_slink_path, domain, bus, dev, func) \
         snprintf(dev_slink_path, PATH_MAX,                                     \
                  domain <= 0xFFFF ? "%s/%04x:%02x:%02x.%1u"                    \
-                                  : "%s/%05x:%02x:%02x.%1u",                   \
+                                  : "%s/%x:%02x:%02x.%1u",                     \
                  SYS_BUS_PCIDEVS_PATH, domain, bus, dev, func);
 
 /**

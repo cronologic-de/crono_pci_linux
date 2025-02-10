@@ -61,28 +61,8 @@ CRONO_KERNEL_PciScanDevices(uint32_t dwVendorId, uint32_t dwDeviceId,
                 }
 
                 // Get PCI Domain, Bus, Device, and Function
-                const char *colon_pos = strchr(en->d_name, ':');
-                if (colon_pos == NULL) {
-                        CRONO_DEBUG("Warning could not read vendor for %s\n",
-                                    en->d_name);
-                }
-                size_t domain_length = colon_pos - en->d_name;
-                if (domain_length == 4) {
-                        sscanf(en->d_name, "%04x:%02x:%02x.%1u", &domain, &bus,
-                               &dev, &func);
-                        CRONO_DEBUG("Read 4-digits domain dir name "
-                                    "<%s> into %d, %d, %d, %d\n",
-                                    en->d_name, domain, bus, dev, func);
-                } else if (domain_length == 5) {
-                        sscanf(en->d_name, "%05x:%02x:%02x.%1u", &domain, &bus,
-                               &dev, &func);
-                        CRONO_DEBUG("Read 5-digits domain dir name "
-                                    "<%s> into %d, %d, %d, %d\n",
-                                    en->d_name, domain, bus, dev, func);
-                } else {
-                        perror("Error: Unsupported domain length.");
-                        continue;
-                }
+                sscanf(en->d_name, "%x:%02x:%02x.%1u", &domain, &bus, &dev,
+                       &func);
 
                 // Get Vendor ID and Device ID
                 int ret = crono_read_vendor_device(domain, bus, dev, func,
@@ -158,29 +138,8 @@ CRONO_KERNEL_PciDeviceOpen(CRONO_KERNEL_DEVICE_HANDLE *phDev,
                 }
 
                 // Get PCI Domain, Bus, Device, and Function
-                const char *colon_pos = strchr(en->d_name, ':');
-                if (colon_pos == NULL) {
-                        CRONO_DEBUG("Warning could not read vendor for %s\n",
-                                    en->d_name);
-                        continue;
-                }
-                size_t domain_length = colon_pos - en->d_name;
-                if (domain_length == 4) {
-                        sscanf(en->d_name, "%04x:%02x:%02x.%1u", &domain, &bus,
-                               &dev, &func);
-                        CRONO_DEBUG("Read 4-digits domain dir name "
-                                    "<%s> into %d, %d, %d, %d\n",
-                                    en->d_name, domain, bus, dev, func);
-                } else if (domain_length == 5) {
-                        sscanf(en->d_name, "%05x:%02x:%02x.%1u", &domain, &bus,
-                               &dev, &func);
-                        CRONO_DEBUG("Read 5-digits domain dir name "
-                                    "<%s> into %d, %d, %d, %d\n",
-                                    en->d_name, domain, bus, dev, func);
-                } else {
-                        perror("Error: Unsupported domain length.");
-                        continue;
-                }
+                sscanf(en->d_name, "%x:%02x:%02x.%1u", &domain, &bus, &dev,
+                       &func);
 
                 // Check values & fill pDevice if device matches the
                 // Vendor/Device
