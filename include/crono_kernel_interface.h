@@ -323,13 +323,13 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_WriteAddr64(
 
 // Read 32-bit value from the BAR of `barNum`.
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_ReadAddr(CRONO_KERNEL_DEVICE_HANDLE hDev,
-                                                uint32_t dwOffset, uint8_t *val,
-                                                uint32_t barNum);
+                                                uint32_t dwOffset,
+                                                uint32_t *val, uint32_t barNum);
 
 // Write 32-bit value from the BAR of `barNum`.
 CRONO_KERNEL_API uint32_t
 CRONO_KERNEL_WriteAddr(CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset,
-                       uint64_t val, uint32_t barNum);
+                       uint32_t val, uint32_t barNum);
 
 /* -----------------------------------------------
     Access PCI configuration space

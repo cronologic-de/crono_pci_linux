@@ -514,7 +514,8 @@ uint32_t CRONO_KERNEL_WriteAddr64(CRONO_KERNEL_DEVICE_HANDLE hDev,
 }
 
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_ReadAddr(CRONO_KERNEL_DEVICE_HANDLE hDev,
-                                                uint32_t dwOffset, uint8_t *val,
+                                                uint32_t dwOffset,
+                                                uint32_t *val,
                                                 uint32_t barNum) {
         CRONO_KERNEL_BAR_DESC *barDesc;
         int ret = CRONO_KERNEL_GetBarDescriptionAddr(hDev, barNum, &barDesc);
@@ -537,7 +538,7 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_ReadAddr(CRONO_KERNEL_DEVICE_HANDLE hDev,
 
 CRONO_KERNEL_API uint32_t
 CRONO_KERNEL_WriteAddr(CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset,
-                       uint64_t val, uint32_t barNum) {
+                       uint32_t val, uint32_t barNum) {
         CRONO_KERNEL_BAR_DESC *barDesc;
         int ret = CRONO_KERNEL_GetBarDescriptionAddr(hDev, barNum, &barDesc);
         if (ret != CRONO_SUCCESS)
