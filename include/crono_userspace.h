@@ -32,6 +32,7 @@
 
 #define SYS_BUS_PCIDEVS_PATH "/sys/bus/pci/devices"
 #define PAGE_SIZE sysconf(_SC_PAGE_SIZE)
+#define PAGE_SIZE_2MB (2 * 1024 * 1024)
 
 /**
  * Constructs the configuration file path into 'config_file_path'.

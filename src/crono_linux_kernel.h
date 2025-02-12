@@ -41,6 +41,8 @@ typedef struct {
 
         // Kernel internal information
         int id; // Internal kernel ID of the buffer
+        
+        int page_size; // System PAGE_SIZE or 2MB
 } CRONO_SG_BUFFER_INFO;
 
 /**

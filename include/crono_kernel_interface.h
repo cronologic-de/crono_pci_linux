@@ -129,6 +129,8 @@ enum {
                                         // support 64-bit DMA addressing.
 
         DMA_ALLOW_NO_HCARD = 0x100, // allow memory lock without hCard
+
+        DMA_PAGE_SIZE_2MB = 0x200, // expect huge pages as result
 };
 
 /* Macros for backward compatibility */

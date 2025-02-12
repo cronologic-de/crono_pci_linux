@@ -544,7 +544,7 @@ uint32_t CRONO_KERNEL_GetBarPointer(CRONO_KERNEL_DEVICE_HANDLE hDev,
  * `CRONO_SUCCESS` or error code.
  */
 uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
-                                   uint32_t dwOptions, uint32_t dwDMABufSize,
+                                   uint32_t dwOptions, uint64_t dwDMABufSize,
                                    CRONO_KERNEL_DMA_SG **ppDma) {
         int ret = CRONO_SUCCESS;
         CRONO_SG_BUFFER_INFO buff_info;
@@ -553,7 +553,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         // ______________________________________
         // Init variables and validate parameters
         //
-        CRONO_DEBUG("Locking Buffer: address <%p>, size <%u>\n", pBuf,
+        CRONO_DEBUG("Locking Buffer: address <%p>, size <%lu>\n", pBuf,
                     dwDMABufSize);
         CRONO_INIT_HDEV_FUNC(hDev);
         CRONO_RET_INV_PARAM_IF_NULL(pBuf);
@@ -571,6 +571,12 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         buff_info.pages = NULL;
         buff_info.id = -1; // Initialize with invalid value
 
+        if (dwOptions & DMA_PAGE_SIZE_2MB) {
+                buff_info.page_size = PAGE_SIZE_2MB;
+        } else {
+                buff_info.page_size = PAGE_SIZE;
+        }
+
         // Allocate the DMA Pages Memory
         pDma = (CRONO_KERNEL_DMA_SG *)malloc(sizeof(CRONO_KERNEL_DMA_SG));
         if (NULL == pDma) {
@@ -580,7 +586,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         memset(pDma, 0, sizeof(CRONO_KERNEL_DMA_SG));
 #define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
         buff_info.pages_count = pDma->dwPages =
-            DIV_ROUND_UP(dwDMABufSize, PAGE_SIZE);
+            DIV_ROUND_UP(dwDMABufSize, buff_info.page_size);
         pDma->pUserAddr = pBuf;
         CRONO_DEBUG("Allocating memory: size <%lu>, pages count <%d>\n",
                     sizeof(CRONO_KERNEL_DMA_PAGE) * pDma->dwPages,
@@ -628,7 +634,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
 
         for (uint64_t iPage = 0; iPage < buff_info.pages_count; iPage++) {
                 pDma->Page[iPage].pPhysicalAddr = buff_info.pages[iPage];
-                pDma->Page[iPage].dwBytes = 4096;
+                pDma->Page[iPage].dwBytes = buff_info.page_size;
         }
 
 #ifdef CRONO_DEBUG_ENABLED
