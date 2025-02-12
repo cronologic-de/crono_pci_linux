@@ -357,7 +357,7 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_DMAContigBufLock(
 // DMA_TO_DEVICE, DMA_ALLOW_64BIT_ADDRESS
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_DMASGBufLock(
     CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf, uint32_t dwOptions,
-    uint32_t dwDMABufSize, CRONO_KERNEL_DMA_SG **ppDma);
+    uint64_t dwDMABufSize, CRONO_KERNEL_DMA_SG **ppDma);
 
 /* Unlock a DMA buffer */
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_DMAContigBufUnlock(
