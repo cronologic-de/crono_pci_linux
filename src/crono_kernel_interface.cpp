@@ -530,7 +530,7 @@ uint32_t CRONO_KERNEL_GetBarPointer(CRONO_KERNEL_DEVICE_HANDLE hDev,
  * - Allocate `ppDma` content.
  * - "INTERNALLY" allocate `buff_info` (`CRONO_SG_BUFFER_INFO`), used for
  *   communication with the kernel module.
- * - Call `ioctl` using `IOCTL_CRONO_LOCK_BUFFER` to allocate kernel internal
+ * - Call `ioctl` using `IOCTL_CRONO_LOCK_BUFFER/2MB` to allocate kernel internal
  *   information and lock the buffer, returning physical memory info.
  * - Fill `ppDma` content with the physical memory info, and `pDma->id` with
  *   the kernel module buffer id, used for next communication (e.g. unlock).
@@ -547,6 +547,9 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
                                    uint32_t dwOptions, uint64_t dwDMABufSize,
                                    CRONO_KERNEL_DMA_SG **ppDma) {
         int ret = CRONO_SUCCESS;
+        size_t page_size;
+        uint32_t ioctl_op;
+
         CRONO_SG_BUFFER_INFO buff_info;
         CRONO_KERNEL_DMA_SG *pDma = NULL;
 
@@ -572,9 +575,11 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         buff_info.id = -1; // Initialize with invalid value
 
         if (dwOptions & DMA_PAGE_SIZE_2MB) {
-                buff_info.page_size = PAGE_SIZE_2MB;
+                page_size = PAGE_SIZE_2MB;
+                ioctl_op = IOCTL_CRONO_LOCK_BUFFER_2MB;
         } else {
-                buff_info.page_size = PAGE_SIZE;
+                page_size = PAGE_SIZE;
+                ioctl_op = IOCTL_CRONO_LOCK_BUFFER;
         }
 
         // Allocate the DMA Pages Memory
@@ -586,7 +591,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
         memset(pDma, 0, sizeof(CRONO_KERNEL_DMA_SG));
 #define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
         buff_info.pages_count = pDma->dwPages =
-            DIV_ROUND_UP(dwDMABufSize, buff_info.page_size);
+            DIV_ROUND_UP(dwDMABufSize, page_size);
         pDma->pUserAddr = pBuf;
         CRONO_DEBUG("Allocating memory: size <%lu>, pages count <%d>\n",
                     sizeof(CRONO_KERNEL_DMA_PAGE) * pDma->dwPages,
@@ -622,7 +627,8 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
                     "pages count <%d>\n",
                     &buff_info, buff_info.size, buff_info.pages_count);
         // `pDevice->miscdev_fd` Must be already opened
-        ret = ioctl(pDevice->miscdev_fd, IOCTL_CRONO_LOCK_BUFFER, &buff_info);
+        
+        ret = ioctl(pDevice->miscdev_fd, ioctl_op, &buff_info);
         if (CRONO_SUCCESS != ret) {
                 printf("Driver module error %d\n", ret);
                 goto alloc_err;
@@ -634,7 +640,7 @@ uint32_t CRONO_KERNEL_DMASGBufLock(CRONO_KERNEL_DEVICE_HANDLE hDev, void *pBuf,
 
         for (uint64_t iPage = 0; iPage < buff_info.pages_count; iPage++) {
                 pDma->Page[iPage].pPhysicalAddr = buff_info.pages[iPage];
-                pDma->Page[iPage].dwBytes = buff_info.page_size;
+                pDma->Page[iPage].dwBytes = page_size;
         }
 
 #ifdef CRONO_DEBUG_ENABLED

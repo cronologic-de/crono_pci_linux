@@ -41,8 +41,6 @@ typedef struct {
 
         // Kernel internal information
         int id; // Internal kernel ID of the buffer
-        
-        int page_size; // System PAGE_SIZE or 2MB
 } CRONO_SG_BUFFER_INFO;
 
 /**
@@ -104,12 +102,12 @@ typedef struct {
 } CRONO_KERNEL_CMDS_INFO;
 
 /**
- * Command value passed to miscdev ioctl() to lock a memory buffer.
+ * Command value passed to miscdev ioctl() to lock an SG memory buffer.
  * 'c' is for `cronologic`.
  */
 #define IOCTL_CRONO_LOCK_BUFFER _IOWR('c', 0, CRONO_SG_BUFFER_INFO *)
 /**
- * Command value passed to miscdev ioctl() to unlock a memory buffer
+ * Command value passed to miscdev ioctl() to unlock an SG memory buffer
  * 'c' is for `cronologic`. Passing buffer wrapper ID in kernel module.
  */
 #define IOCTL_CRONO_UNLOCK_BUFFER _IOWR('c', 1, int *)
@@ -127,5 +125,10 @@ typedef struct {
  * 'c' is for `cronologic`. Passing buffer wrapper ID in kernel module.
  */
 #define IOCTL_CRONO_UNLOCK_CONTIG_BUFFER _IOWR('c', 4, int *)
+/**
+ * Command value passed to miscdev ioctl() to lock an SG Huge TLB (2MB) memory buffer.
+ * 'c' is for `cronologic`.
+ */
+#define IOCTL_CRONO_LOCK_BUFFER_2MB _IOWR('c', 5, CRONO_SG_BUFFER_INFO *)
 
 #endif // #ifndef _CRONO_LINUX_KERNEL_H_
