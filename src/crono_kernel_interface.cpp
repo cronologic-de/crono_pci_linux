@@ -516,21 +516,19 @@ uint32_t CRONO_KERNEL_WriteAddr64(CRONO_KERNEL_DEVICE_HANDLE hDev,
 CRONO_KERNEL_API uint32_t CRONO_KERNEL_ReadAddr(CRONO_KERNEL_DEVICE_HANDLE hDev,
                                                 uint32_t dwOffset,
                                                 uint32_t *val,
-                                                uint32_t barNum) {
-        CRONO_KERNEL_BAR_DESC *barDesc;
-        int ret = CRONO_KERNEL_GetBarDescriptionAddr(hDev, barNum, &barDesc);
-        if (ret != CRONO_SUCCESS)
-                return ret;
+                                                uint32_t barIndex) {
+        CRONO_INIT_HDEV_FUNC(hDev);
 
         // Validation
-        if ((dwOffset + sizeof(val)) > barDesc->length) {
+        if ((dwOffset + sizeof(val)) > pDevice->bar_descs[barIndex].length) {
                 return -ENOMEM;
         }
 
         // Read the value
-        *val =
-            *((volatile uint32_t *)(((unsigned char *)(barDesc->userAddress)) +
-                                    dwOffset));
+        *val = *((
+            volatile uint32_t *)(((unsigned char *)(pDevice->bar_descs[barIndex]
+                                                        .userAddress)) +
+                                 dwOffset));
 
         // Success
         return CRONO_SUCCESS;
@@ -538,19 +536,17 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_ReadAddr(CRONO_KERNEL_DEVICE_HANDLE hDev,
 
 CRONO_KERNEL_API uint32_t
 CRONO_KERNEL_WriteAddr(CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset,
-                       uint32_t val, uint32_t barNum) {
-        CRONO_KERNEL_BAR_DESC *barDesc;
-        int ret = CRONO_KERNEL_GetBarDescriptionAddr(hDev, barNum, &barDesc);
-        if (ret != CRONO_SUCCESS)
-                return ret;
+                       uint32_t val, uint32_t barIndex) {
+        CRONO_INIT_HDEV_FUNC(hDev);
 
         // Validation
-        if ((dwOffset + sizeof(val)) > barDesc->length) {
+        if ((dwOffset + sizeof(val)) > pDevice->bar_descs[barIndex].length) {
                 return -ENOMEM;
         }
 
         // Write the value
-        *((volatile uint32_t *)(((unsigned char *)(barDesc->userAddress)) +
+        *((volatile uint32_t *)(((unsigned char *)(pDevice->bar_descs[barIndex]
+                                                       .userAddress)) +
                                 dwOffset)) = val;
 
         // Success
