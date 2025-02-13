@@ -513,13 +513,41 @@ uint32_t CRONO_KERNEL_WriteAddr64(CRONO_KERNEL_DEVICE_HANDLE hDev,
         return CRONO_SUCCESS;
 }
 
-uint32_t CRONO_KERNEL_GetBarPointer(CRONO_KERNEL_DEVICE_HANDLE hDev,
-                                    uint32_t *barPointer) {
-        // Init variables and validate parameters
+CRONO_KERNEL_API uint32_t CRONO_KERNEL_ReadAddr(CRONO_KERNEL_DEVICE_HANDLE hDev,
+                                                uint32_t dwOffset,
+                                                uint32_t *val,
+                                                uint32_t barIndex) {
         CRONO_INIT_HDEV_FUNC(hDev);
-        CRONO_RET_INV_PARAM_IF_NULL(barPointer);
 
-        barPointer = (uint32_t *)(pDevice->bar_descs[0].userAddress);
+        // Validation
+        if ((dwOffset + sizeof(val)) > pDevice->bar_descs[barIndex].length) {
+                return -ENOMEM;
+        }
+
+        // Read the value
+        *val = *((
+            volatile uint32_t *)(((unsigned char *)(pDevice->bar_descs[barIndex]
+                                                        .userAddress)) +
+                                 dwOffset));
+
+        // Success
+        return CRONO_SUCCESS;
+}
+
+CRONO_KERNEL_API uint32_t
+CRONO_KERNEL_WriteAddr(CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t dwOffset,
+                       uint32_t val, uint32_t barIndex) {
+        CRONO_INIT_HDEV_FUNC(hDev);
+
+        // Validation
+        if ((dwOffset + sizeof(val)) > pDevice->bar_descs[barIndex].length) {
+                return -ENOMEM;
+        }
+
+        // Write the value
+        *((volatile uint32_t *)(((unsigned char *)(pDevice->bar_descs[barIndex]
+                                                       .userAddress)) +
+                                dwOffset)) = val;
 
         // Success
         return CRONO_SUCCESS;
@@ -951,6 +979,23 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_GetBarDescriptions(
         memcpy(barDescs, pDevice->bar_descs, sizeof(CRONO_KERNEL_BAR_DESC) * 6);
         *barCount = pDevice->bar_count;
         return CRONO_SUCCESS;
+}
+
+uint32_t CRONO_KERNEL_GetBarDescriptionAddr(CRONO_KERNEL_DEVICE_HANDLE hDev,
+                                            uint32_t barNum,
+                                            CRONO_KERNEL_BAR_DESC **barDesc) {
+        // Init variables and validate parameters
+        CRONO_INIT_HDEV_FUNC(hDev);
+        CRONO_RET_INV_PARAM_IF_NULL(barDesc);
+
+        for (int barIndex = 0; barIndex < 6; barIndex++) {
+                if (pDevice->bar_descs[barIndex].barNum == barNum) {
+                        *barDesc = &pDevice->bar_descs[barIndex];
+                        return CRONO_SUCCESS;
+                }
+        }
+        *barDesc = nullptr;
+        return -EINVAL;
 }
 
 uint32_t fill_device_bar_descriptions(PCRONO_KERNEL_DEVICE pDevice) {
