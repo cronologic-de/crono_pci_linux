@@ -981,23 +981,6 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_GetBarDescriptions(
         return CRONO_SUCCESS;
 }
 
-uint32_t CRONO_KERNEL_GetBarDescriptionAddr(CRONO_KERNEL_DEVICE_HANDLE hDev,
-                                            uint32_t barNum,
-                                            CRONO_KERNEL_BAR_DESC **barDesc) {
-        // Init variables and validate parameters
-        CRONO_INIT_HDEV_FUNC(hDev);
-        CRONO_RET_INV_PARAM_IF_NULL(barDesc);
-
-        for (int barIndex = 0; barIndex < 6; barIndex++) {
-                if (pDevice->bar_descs[barIndex].barNum == barNum) {
-                        *barDesc = &pDevice->bar_descs[barIndex];
-                        return CRONO_SUCCESS;
-                }
-        }
-        *barDesc = nullptr;
-        return -EINVAL;
-}
-
 uint32_t fill_device_bar_descriptions(PCRONO_KERNEL_DEVICE pDevice) {
 
         int ret = CRONO_SUCCESS;

@@ -409,21 +409,6 @@ CRONO_KERNEL_API uint32_t CRONO_KERNEL_GetBarDescriptions(
     CRONO_KERNEL_DEVICE_HANDLE hDev, uint32_t *barCount,
     CRONO_KERNEL_BAR_DESC *barDescs);
 
-/**
- * @brief Get device BAR Memory address for barNum.
- * Memory addresses will not be valid after device is
- * closed.
- *
- * @param hDev[in]: A valid handle to the device.
- * @param barNum[in]: Number of BAR.
- * @param barDesc[out]: will hold the CRONO_KERNEL_BAR_DESC address.
- *
- * @return CRONO_SUCCESS in case of no error, or errno in case of error.
- */
-uint32_t CRONO_KERNEL_GetBarDescriptionAddr(CRONO_KERNEL_DEVICE_HANDLE hDev,
-                                            uint32_t barNum,
-                                            CRONO_KERNEL_BAR_DESC **barDesc);
-
 #ifdef __linux__
 /**
  * Return Error Code `-EINVAL`
